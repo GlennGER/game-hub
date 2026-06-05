@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game-Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- HAUPTMENÜ -->
+        <div id="main-menu" class="screen active">
+            <h1>🕹️ Game-Hub</h1>
+            <p class="subtitle">Premium Gaming Suite</p>
+            
+            <div class="game-grid">
+                <button class="game-card" onclick="switchScreen('game-snake')"><span class="icon">🐍</span><span class="title">Snake</span></button>
+                <button class="game-card" onclick="switchScreen('game-flappy')"><span class="icon">🐦</span><span class="title">Flappy Bird</span></button>
+                <button class="game-card" onclick="switchScreen('game-yatzy')"><span class="icon">🎲</span><span class="title">Yatzy</span></button>
+                <button class="game-card" onclick="switchScreen('game-tictactoe')"><span class="icon">🤖</span><span class="title">Tic-Tac-Toe</span></button>
+                <button class="game-card" onclick="switchScreen('game-memory')"><span class="icon">🧠</span><span class="title">Memory</span></button>
+                <button class="game-card" onclick="switchScreen('game-highlow')"><span class="icon">🃏</span><span class="title">Höher / Tiefer</span></button>
+                <button class="game-card" onclick="switchScreen('game-guess')"><span class="icon">🔮</span><span class="title">Zahlen Raten</span></button>
+                <button class="game-card" onclick="switchScreen('game-clicker')"><span class="icon">🍪</span><span class="title">Clicker</span></button>
+                <button class="game-card" onclick="switchScreen('game-reaction')"><span class="icon">⚡</span><span class="title">Reaktionstest</span></button>
+                <button class="game-card" onclick="switchScreen('game-rps')"><span class="icon">✊</span><span class="title">Schere-Stein</span></button>
+                <button class="game-card" onclick="switchScreen('game-hangman')"><span class="icon">🔤</span><span class="title">Wort Erraten</span></button>
+            </div>
+        </div>
+
+        <!-- SNAKE -->
+        <div id="game-snake" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Snake</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">Easy</option><option value="medium" selected>Normal</option><option value="hard">Hard</option>
+                </select>
+            </div>
+            <div id="snake-score" class="status-text">Bereit?</div>
+            <canvas id="snakeCanvas" width="300" height="300"></canvas>
+            <button id="snake-start-btn" class="action-btn big" onclick="startSnake()">SPIEL STARTEN</button>
+            <div class="controls mobile-only">
+                <button class="ctrl-btn" onclick="changeSnakeDir('UP')">▲</button>
+                <div><button class="ctrl-btn" onclick="changeSnakeDir('LEFT')">◀</button><button class="ctrl-btn" onclick="changeSnakeDir('RIGHT')">▶</button></div>
+                <button class="ctrl-btn" onclick="changeSnakeDir('DOWN')">▼</button>
+            </div>
+        </div>
+
+        <!-- FLAPPY BIRD -->
+        <div id="game-flappy" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Flappy Bird</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">Easy</option><option value="medium" selected>Normal</option><option value="hard">Hard</option>
+                </select>
+            </div>
+            <div id="flappy-score" class="status-text">Bereit?</div>
+            <canvas id="flappyCanvas" width="320" height="400" onclick="flappyJump()"></canvas>
+            <button id="flappy-start-btn" class="action-btn big" onclick="startFlappy()">SPIEL STARTEN</button>
+        </div>
+
+        <!-- YATZY -->
+        <div id="game-yatzy" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Yatzy</h2>
+                <div style="width:60px"></div>
+            </div>
+            <div id="yatzy-status" class="status-text">Wurf 0/3</div>
+            <div class="dice-container" id="dice-row">
+                <div class="die" onclick="toggleDie(0)">⚀</div><div class="die" onclick="toggleDie(1)">⚀</div><div class="die" onclick="toggleDie(2)">⚀</div><div class="die" onclick="toggleDie(3)">⚀</div><div class="die" onclick="toggleDie(4)">⚀</div>
+            </div>
+            <button id="roll-btn" class="action-btn" onclick="rollDice()" style="margin: 15px 0;">🎲 Würfeln</button>
+            <div id="yatzy-scorecard" class="scorecard"></div>
+        </div>
+
+        <!-- TIC-TAC-TOE -->
+        <div id="game-tictactoe" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Tic-Tac-Toe</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">Bot: Dumm</option><option value="hard" selected>Bot: Schlau</option>
+                </select>
+            </div>
+            <div id="ttt-status" class="status-text">Du bist X. Starte!</div>
+            <div class="ttt-board">
+                <div class="cell" onclick="makeMove(0)"></div><div class="cell" onclick="makeMove(1)"></div><div class="cell" onclick="makeMove(2)"></div>
+                <div class="cell" onclick="makeMove(3)"></div><div class="cell" onclick="makeMove(4)"></div><div class="cell" onclick="makeMove(5)"></div>
+                <div class="cell" onclick="makeMove(6)"></div><div class="cell" onclick="makeMove(7)"></div><div class="cell" onclick="makeMove(8)"></div>
+            </div>
+            <button class="action-btn" onclick="resetTTT()">Neustart</button>
+        </div>
+
+        <!-- MEMORY -->
+        <div id="game-memory" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Memory</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">Klein</option><option value="medium" selected>Normal</option><option value="hard">Groß</option>
+                </select>
+            </div>
+            <div id="memory-status" class="status-text">Paare finden</div>
+            <div id="memory-board" class="memory-grid"></div>
+            <button class="action-btn" onclick="initMemory()">Neustart</button>
+        </div>
+
+        <!-- REAKTIONSTEST -->
+        <div id="game-reaction" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Reaktion</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">Easy</option><option value="medium" selected>Normal</option><option value="hard">Hard</option>
+                </select>
+            </div>
+            <div id="reaction-status" class="status-text">Klicke das Feld zum Starten!</div>
+            <div id="reaction-box" onclick="clickReactionBox()">KLICK ZUM STARTEN</div>
+            <button class="action-btn" onclick="initReaction()" style="margin-top: 20px;">🔄 Reset</button>
+        </div>
+
+        <!-- HÖHER ODER TIEFER -->
+        <div id="game-highlow" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Höher / Tiefer</h2>
+                <div style="width:60px"></div>
+            </div>
+            <div id="hl-score" class="status-text">Score: 0</div>
+            <div class="center-box"><p>Aktuelle Zahl:</p><h1 id="current-card-val" style="-webkit-text-fill-color: #fff; margin: 10px 0;">?</h1></div>
+            <div class="btn-group" style="display: flex; gap: 12px; margin-top: 20px;">
+                <button class="action-btn" onclick="guessHighLow('higher')">▲ Höher</button>
+                <button class="action-btn" onclick="guessHighLow('lower')">▼ Tiefer</button>
+            </div>
+        </div>
+
+        <!-- ZAHLEN RATEN -->
+        <div id="game-guess" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Zahlen Raten</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">1-50</option><option value="medium" selected>1-100</option><option value="hard">1-250</option>
+                </select>
+            </div>
+            <div id="guess-status" class="status-text">Rate die Zahl!</div>
+            <div class="center-box">
+                <input type="number" id="guess-input" placeholder="Zahl" style="margin-bottom: 20px;">
+                <br>
+                <button class="action-btn" onclick="checkGuess()">Tippen</button>
+            </div>
+        </div>
+
+        <!-- CLICKER -->
+        <div id="game-clicker" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Cookie Clicker</h2>
+                <div style="width:60px"></div>
+            </div>
+            <div id="clicker-score" class="status-text">Klicks: 0</div>
+            <div class="center-box" style="background:transparent; border:none; box-shadow:none;">
+                <button id="cookie-btn" onclick="clickCookie()" style="background: none; border: none; font-size: 6rem; cursor: pointer; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)); transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'">🍪</button>
+            </div>
+        </div>
+
+        <!-- SCHERE STEIN PAPIER -->
+        <div id="game-rps" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Schere Stein</h2>
+                <div style="width:60px"></div>
+            </div>
+            <div id="rps-status" class="status-text">Wähle deine Waffe!</div>
+            <div class="btn-group" style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 240px;">
+                <button class="action-btn" onclick="playRPS('✊')">✊ Stein</button>
+                <button class="action-btn" onclick="playRPS('✋')">✋ Papier</button>
+                <button class="action-btn" onclick="playRPS('✌️')">✌️ Schere</button>
+            </div>
+        </div>
+
+        <!-- WORT ERRATEN (HANGMAN) -->
+        <div id="game-hangman" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Wort Erraten</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">8 Leben</option><option value="medium" selected>6 Leben</option><option value="hard">4 Leben</option>
+                </select>
+            </div>
+            <div id="hangman-word" style="font-size: 2.2rem; letter-spacing: 6px; margin: 20px 0; font-weight: 800; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.25);">_ _ _ _</div>
+            <div id="hangman-status" class="status-text">Leben: 6</div>
+            <div id="hangman-keyboard" class="keyboard-grid"></div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
