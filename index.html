@@ -177,11 +177,17 @@
             <div class="game-navbar">
                 <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
                 <h2>Cookie Clicker</h2>
-                <div style="width:60px"></div>
+                <button class="back-btn" onclick="resetClicker()">Reset</button>
             </div>
-            <div id="clicker-score" class="status-text">Klicks: 0</div>
-            <div class="center-box" style="background:transparent; border:none; box-shadow:none;">
-                <button id="cookie-btn" onclick="clickCookie()" style="background: none; border: none; font-size: 6rem; cursor: pointer; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)); transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'">🍪</button>
+            <div class="clicker-stats-container">
+                <div id="clicker-score" class="status-text" style="margin-bottom: 5px;">Cookies: 0</div>
+                <div id="clicker-cps" class="cps-text">0 pro Sekunde | Klick: +1</div>
+            </div>
+            <div class="center-box cookie-wrapper">
+                <button id="cookie-btn" onclick="clickCookie()">🍪</button>
+            </div>
+            <div class="shop-container" id="clicker-shop">
+                <!-- Dynamically generated shop -->
             </div>
         </div>
 

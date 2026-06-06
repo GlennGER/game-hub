@@ -31,10 +31,16 @@ function scoreText(label, score, key) {
     return `${label}: ${score} | Highscore: ${getHighscore(key)}`;
 }
 
+let clickerInterval = null;
+
 function switchScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     clearInterval(gameInterval);
+    if(clickerInterval) {
+        clearInterval(clickerInterval);
+        saveClickerState();
+    }
 
     const activeSelect = document.querySelector(`#${screenId} .diff-select`);
     if(activeSelect) activeSelect.value = diffMode;
@@ -401,10 +407,238 @@ function guessHighLow(g) {
 let guessTarget, maxGuessRange;
 function initGuess() { maxGuessRange = diffMode === "easy" ? 50 : (diffMode === "medium" ? 100 : 250); guessTarget = Math.floor(Math.random()*maxGuessRange)+1; document.getElementById('guess-status').innerText = `Rate von 1 bis ${maxGuessRange}`; document.getElementById('guess-input').value = ""; }
 function checkGuess() { let v = parseInt(document.getElementById('guess-input').value); if(v === guessTarget) document.getElementById('guess-status').innerText = "🎉 Gefunden!"; else if(v < guessTarget) document.getElementById('guess-status').innerText = "Höher! 📈"; else document.getElementById('guess-status').innerText = "Tiefer! 📉"; }
-let clickerCount = 0; function initClicker() { clickerCount = 0; document.getElementById('clicker-score').innerText = "Klicks: 0"; }
-function clickCookie() { clickerCount++; document.getElementById('clicker-score').innerText = "Klicks: " + clickerCount; }
+
+// COOKIE CLICKER (UPGRADED)
+let clickerState = {
+    cookies: 0,
+    clickPower: 1,
+    buildings: {
+        clickPowerLvl: 0,
+        cursor: 0,
+        grandma: 0,
+        bakery: 0,
+        factory: 0
+    }
+};
+
+const clickerUpgrades = {
+    clickPowerLvl: { name: "Klick-Stärke", cost: 50, costMultiplier: 1.5, value: 1, isClickPower: true, icon: "⚡" },
+    cursor: { name: "Zeiger", cost: 15, costMultiplier: 1.15, value: 0.5, isClickPower: false, icon: "🖱️" },
+    grandma: { name: "Oma", cost: 100, costMultiplier: 1.15, value: 4, isClickPower: false, icon: "👵" },
+    bakery: { name: "Bäckerei", cost: 1100, costMultiplier: 1.15, value: 32, isClickPower: false, icon: "🏪" },
+    factory: { name: "Fabrik", cost: 12000, costMultiplier: 1.15, value: 260, isClickPower: false, icon: "🏭" }
+};
+
+let clickerSaveTimer = 0;
+
+function initClicker() {
+    const saved = localStorage.getItem("gamehub-clicker-state");
+    if(saved) {
+        try {
+            clickerState = JSON.parse(saved);
+        } catch(e) {
+            console.error("Failed to parse clicker state", e);
+        }
+    } else {
+        clickerState = {
+            cookies: 0,
+            clickPower: 1,
+            buildings: {
+                clickPowerLvl: 0,
+                cursor: 0,
+                grandma: 0,
+                bakery: 0,
+                factory: 0
+            }
+        };
+    }
+
+    if(!clickerState.buildings) clickerState.buildings = {};
+    for (let key in clickerUpgrades) {
+        if (clickerState.buildings[key] === undefined) {
+            clickerState.buildings[key] = 0;
+        }
+    }
+    if(clickerState.clickPower === undefined) clickerState.clickPower = 1;
+    if(clickerState.cookies === undefined) clickerState.cookies = 0;
+
+    const lastTime = Number(localStorage.getItem("gamehub-clicker-lasttime") || 0);
+    const now = Date.now();
+    const cps = calculateCPS();
+    if(lastTime > 0 && cps > 0) {
+        const elapsedSeconds = Math.max(0, (now - lastTime) / 1000);
+        const produced = Math.floor(elapsedSeconds * cps);
+        if(produced > 0) {
+            clickerState.cookies += produced;
+            saveClickerState();
+            setTimeout(() => {
+                alert(`Willkommen zurück! Deine Gebäude haben in deiner Abwesenheit ${produced.toLocaleString('de-DE')} Cookies gebacken! 🍪`);
+            }, 300);
+        }
+    }
+
+    clearInterval(clickerInterval);
+    clickerInterval = setInterval(clickerTick, 100);
+    clickerSaveTimer = 0;
+
+    updateClickerUI();
+}
+
+function clickerTick() {
+    const cps = calculateCPS();
+    if(cps > 0) {
+        clickerState.cookies += cps * 0.1;
+        clickerSaveTimer += 100;
+        if(clickerSaveTimer >= 5000) {
+            saveClickerState();
+            clickerSaveTimer = 0;
+        }
+        updateClickerUI(true);
+    }
+}
+
+function calculateCPS() {
+    let cps = 0;
+    for(let key in clickerUpgrades) {
+        const upgrade = clickerUpgrades[key];
+        if(!upgrade.isClickPower) {
+            const count = clickerState.buildings[key] || 0;
+            cps += count * upgrade.value;
+        }
+    }
+    return Math.round(cps * 10) / 10;
+}
+
+function getUpgradeCost(key) {
+    const upgrade = clickerUpgrades[key];
+    const count = clickerState.buildings[key] || 0;
+    return Math.floor(upgrade.cost * Math.pow(upgrade.costMultiplier, count));
+}
+
+function clickCookie() {
+    clickerState.cookies += clickerState.clickPower;
+    saveClickerState();
+    updateClickerUI(true);
+    createFloatingText(`+${clickerState.clickPower}`);
+}
+
+function createFloatingText(text) {
+    const wrapper = document.querySelector('.cookie-wrapper');
+    if(!wrapper) return;
+    const span = document.createElement('span');
+    span.innerText = text;
+    span.className = "floating-cookie-text";
+    
+    const x = Math.random() * 80 - 40;
+    const y = Math.random() * 40 - 20;
+    span.style.left = `calc(50% + ${x}px)`;
+    span.style.top = `calc(50% + ${y}px)`;
+    
+    wrapper.appendChild(span);
+    setTimeout(() => {
+        span.remove();
+    }, 800);
+}
+
+function buyUpgrade(key) {
+    const cost = getUpgradeCost(key);
+    if(clickerState.cookies >= cost) {
+        clickerState.cookies -= cost;
+        clickerState.buildings[key] = (clickerState.buildings[key] || 0) + 1;
+        
+        const upgrade = clickerUpgrades[key];
+        if(upgrade.isClickPower) {
+            clickerState.clickPower += upgrade.value;
+        }
+        
+        saveClickerState();
+        updateClickerUI();
+    }
+}
+
+function saveClickerState() {
+    localStorage.setItem("gamehub-clicker-state", JSON.stringify(clickerState));
+    localStorage.setItem("gamehub-clicker-lasttime", Date.now().toString());
+}
+
+function resetClicker() {
+    if(confirm("Möchtest du wirklich deinen gesamten Fortschritt zurücksetzen?")) {
+        clickerState = {
+            cookies: 0,
+            clickPower: 1,
+            buildings: {
+                clickPowerLvl: 0,
+                cursor: 0,
+                grandma: 0,
+                bakery: 0,
+                factory: 0
+            }
+        };
+        saveClickerState();
+        updateClickerUI();
+    }
+}
+
+function updateClickerUI(isTickOnly) {
+    const scoreEl = document.getElementById('clicker-score');
+    const cpsEl = document.getElementById('clicker-cps');
+    if(!scoreEl || !cpsEl) return;
+
+    const cps = calculateCPS();
+    scoreEl.innerText = `Cookies: ${Math.floor(clickerState.cookies).toLocaleString('de-DE')}`;
+    cpsEl.innerText = `${cps.toLocaleString('de-DE')} pro Sekunde | Klick: +${clickerState.clickPower}`;
+
+    if(isTickOnly) {
+        for(let key in clickerUpgrades) {
+            const btn = document.getElementById(`shop-item-${key}`);
+            if(btn) {
+                const cost = getUpgradeCost(key);
+                if(clickerState.cookies >= cost) {
+                    btn.classList.remove('disabled');
+                } else {
+                    btn.classList.add('disabled');
+                }
+            }
+        }
+        return;
+    }
+
+    const shopEl = document.getElementById('clicker-shop');
+    if(!shopEl) return;
+
+    let html = `<div class="shop-title">Upgrades & Gebäude</div>`;
+    for(let key in clickerUpgrades) {
+        const upgrade = clickerUpgrades[key];
+        const cost = getUpgradeCost(key);
+        const count = clickerState.buildings[key] || 0;
+        const isDisabled = clickerState.cookies < cost ? 'disabled' : '';
+        
+        let desc = "";
+        if(upgrade.isClickPower) {
+            desc = `+${upgrade.value} pro Klick`;
+        } else {
+            desc = `+${upgrade.value} Cookies/s`;
+        }
+
+        html += `
+            <div class="shop-item ${isDisabled}" id="shop-item-${key}" onclick="buyUpgrade('${key}')">
+                <div class="shop-item-info">
+                    <span class="shop-item-name">${upgrade.icon} ${upgrade.name}</span>
+                    <span class="shop-item-desc">${desc}</span>
+                </div>
+                <div class="shop-item-buy">
+                    <span class="shop-item-cost">${cost.toLocaleString('de-DE')} 🍪</span>
+                    <span class="shop-item-count">Besitz: ${count}</span>
+                </div>
+            </div>
+        `;
+    }
+    shopEl.innerHTML = html;
+}
+
 function playRPS(p) { let options = ['✊', '✋', '✌️'], c = options[Math.floor(Math.random()*3)], res = ""; if(p === c) res = "Gleichstand!"; else if((p==='✊'&&c==='✌️') || (p==='✋'&&c==='✊') || (p==='✌️'&&c==='✋')) res = "Sieg! 🎉"; else res = "Niederlage! 🤖"; document.getElementById('rps-status').innerText = `Bot: ${c} -> ${res}`; }
 let pool = ["CODE", "GAME", "OFFLINE", "ENGINE", "ARCADE", "PIXEL", "MOBILE"], word, guesses, lives;
-function initHangman() { word = pool[Math.floor(Math.random()*pool.length)]; guesses = []; lives = diffMode === "easy" ? 8 : (diffMode === "medium" ? 6 : 4); updateHangman(); document.getElementById('hangman-keyboard').innerHTML = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => `<button class="key-btn" onclick="guessLetter(this, '${l}')">${l}</button>`).join(""); }
+function initHangman() { word = pool[Math.floor(Math.random()*wordPoolLength())]; guesses = []; lives = diffMode === "easy" ? 8 : (diffMode === "medium" ? 6 : 4); updateHangman(); document.getElementById('hangman-keyboard').innerHTML = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => `<button class="key-btn" onclick="guessLetter(this, '${l}')">${l}</button>`).join(""); }
+function wordPoolLength() { return pool.length; }
 function guessLetter(btn, l) { btn.disabled = true; guesses.push(l); if(!word.includes(l)) lives--; updateHangman(); }
 function updateHangman() { let str = word.split("").map(l => guesses.includes(l)?l:"_").join(" "); document.getElementById('hangman-word').innerText = str; document.getElementById('hangman-status').innerText = "Leben übrig: " + lives; if(!str.includes("_")) document.getElementById('hangman-status').innerText = "Gewonnen! 🏆"; if(lives <= 0) document.getElementById('hangman-status').innerText = "Verloren! Wort war: " + word; }
