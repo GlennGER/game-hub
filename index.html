@@ -29,6 +29,7 @@
                 <button class="game-card" onclick="switchScreen('game-rps')"><span class="icon">✊</span><span class="title">Schere-Stein</span></button>
                 <button class="game-card" onclick="switchScreen('game-hangman')"><span class="icon">🔤</span><span class="title">Wort Erraten</span></button>
                 <button class="game-card" onclick="switchScreen('game-chess')"><span class="icon">♟️</span><span class="title">Schach</span></button>
+                <button class="game-card" onclick="switchScreen('game-minesweeper')"><span class="icon">💣</span><span class="title">Minesweeper</span></button>
             </div>
         </div>
 
@@ -239,6 +240,20 @@
                 <button class="action-btn" onclick="initChess()">Neues Spiel</button>
                 <button class="action-btn" onclick="resetChess()">Reset</button>
             </div>
+        </div>
+
+        <!-- MINESWEEPER -->
+        <div id="game-minesweeper" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Minesweeper</h2>
+                <select class="diff-select" onchange="liveMinesweeperDiff(this.value)">
+                    <option value="easy">Easy</option><option value="medium" selected>Normal</option><option value="hard">Hard</option>
+                </select>
+            </div>
+            <div id="minesweeper-status" class="status-text">Neues Spiel</div>
+            <div id="minesweeper-board" class="minesweeper-board"></div>
+            <button class="action-btn big" onclick="initMinesweeper()">Neues Spiel</button>
         </div>
 
     </div>

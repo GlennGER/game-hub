@@ -946,3 +946,53 @@ input[type="number"]:focus {
         opacity: 0;
     }
 }
+
+/* Minesweeper board */
+.minesweeper-board {
+    display: grid;
+    width: min(380px, 90vw);
+    gap: 2px;
+    background: #999;
+    padding: 2px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.minesweeper-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: clamp(14px, 2vw, 20px);
+    background: #c0c0c0;
+    border: 2px outset #dfdfdf;
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    transition: all 0.08s;
+}
+
+.minesweeper-cell:hover:not(.revealed):not(.mine) {
+    background: #dfdfdf;
+}
+
+.minesweeper-cell.revealed {
+    background: #f0f0f0;
+    border: 1px solid #999;
+    border-style: inset;
+    cursor: default;
+}
+
+.minesweeper-cell.flagged {
+    background: #c0c0c0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(16px, 2.5vw, 22px);
+}
+
+.minesweeper-cell.mine {
+    background: #ff4444;
+    color: #fff;
+}
