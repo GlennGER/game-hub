@@ -15,6 +15,7 @@
     padding: 0; 
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
     user-select: none; 
+    touch-action: manipulation;
 }
 
 body { 
@@ -52,6 +53,10 @@ body {
     width: 100%; 
     height: 100%; 
     padding: clamp(18px, 3vw, 34px); 
+    padding-top: calc(clamp(18px, 3vw, 34px) + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(clamp(18px, 3vw, 34px) + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(clamp(18px, 3vw, 34px) + env(safe-area-inset-left, 0px));
+    padding-right: calc(clamp(18px, 3vw, 34px) + env(safe-area-inset-right, 0px));
     flex-direction: column; 
     align-items: center; 
     overflow-y: auto; 
@@ -107,12 +112,16 @@ h1 {
     background: rgba(255, 250, 241, 0.72); 
     border: 1px solid var(--border-color); 
     color: var(--text-color); 
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-radius: 8px;
-    font-size: 0.9rem; 
+    font-size: 0.95rem; 
     cursor: pointer; 
     font-weight: 600; 
     transition: all 0.2s;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .back-btn:hover {
@@ -622,9 +631,15 @@ input[type="number"]:focus {
             "primary secondary";
         align-items: center;
         justify-items: center;
-        align-content: center;
+        align-content: safe center;
         column-gap: 34px;
         row-gap: 16px;
+    }
+
+    @media (max-height: 680px) {
+        .screen.active:not(#main-menu) {
+            align-content: start;
+        }
     }
 
     .screen.active:not(#main-menu) .game-navbar {
