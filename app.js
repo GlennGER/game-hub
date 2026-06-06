@@ -1,34 +1,34 @@
 let gameInterval;
 let diffMode = "medium";
 
-function getHighscore(key) {
-    return Number(localStorage.getItem("gamehub-highscore-" + key) || 0);
+function getHighscore(key, difficulty = diffMode) {
+    return Number(localStorage.getItem("gamehub-highscore-" + key + "-" + difficulty) || 0);
 }
 
-function saveHighscore(key, score) {
-    const best = getHighscore(key);
-    if(score > best) {
-        localStorage.setItem("gamehub-highscore-" + key, score);
+function saveHighscore(key, score, difficulty = diffMode) {
+    const best = getHighscore(key, difficulty);
+    if (score > best) {
+        localStorage.setItem("gamehub-highscore-" + key + "-" + difficulty, score);
         return true;
     }
     return false;
 }
 
-function getBestTime(key) {
-    return Number(localStorage.getItem("gamehub-besttime-" + key) || 0);
+function getBestTime(key, difficulty = diffMode) {
+    return Number(localStorage.getItem("gamehub-besttime-" + key + "-" + difficulty) || 0);
 }
 
-function saveBestTime(key, time) {
-    const best = getBestTime(key);
-    if(!best || time < best) {
-        localStorage.setItem("gamehub-besttime-" + key, time);
+function saveBestTime(key, time, difficulty = diffMode) {
+    const best = getBestTime(key, difficulty);
+    if (!best || time < best) {
+        localStorage.setItem("gamehub-besttime-" + key + "-" + difficulty, time);
         return true;
     }
     return false;
 }
 
-function scoreText(label, score, key) {
-    return `${label}: ${score} | Highscore: ${getHighscore(key)}`;
+function scoreText(label, score, key, difficulty = diffMode) {
+    return `${label}: ${score} | Highscore: ${getHighscore(key, difficulty)}`;
 }
 
 let clickerInterval = null;
@@ -57,6 +57,35 @@ function switchScreen(screenId) {
     if(screenId === 'game-reaction') initReaction();
     if(screenId === 'game-hangman') initHangman();
     if(screenId === 'game-yatzy') initYatzy();
+    if(screenId === 'main-menu') updateMenuHighscores();
+        if(screenId === 'game-snake') {
+            // Attach mobile swipe controls for snake canvas
+            const canvas = document.getElementById('snakeCanvas');
+            if(canvas && !canvas._snakeTouchBound) {
+                let tx = 0, ty = 0;
+                canvas.addEventListener('touchstart', function(e){
+                    const t = e.touches[0]; tx = t.clientX; ty = t.clientY; e.preventDefault();
+                }, {passive:false});
+                canvas.addEventListener('touchend', function(e){
+                    const t = e.changedTouches[0]; const dx = t.clientX - tx; const dy = t.clientY - ty; const absX = Math.abs(dx); const absY = Math.abs(dy);
+                    if(Math.max(absX, absY) < 24) return;
+                    if(absX > absY) { if(dx > 0) changeSnakeDir('RIGHT'); else changeSnakeDir('LEFT'); }
+                    else { if(dy > 0) changeSnakeDir('DOWN'); else changeSnakeDir('UP'); }
+                    e.preventDefault();
+                }, {passive:false});
+                // bind touchstart to mobile control buttons for immediate response
+                document.querySelectorAll('.mobile-only .ctrl-btn').forEach(btn => {
+                    if(btn._touchBound) return; btn.addEventListener('touchstart', function(ev){ ev.preventDefault(); this.classList.add('active'); const dir = this.dataset.dir; if(dir) changeSnakeDir(dir); }, {passive:false});
+                    btn.addEventListener('touchend', function(ev){ ev.preventDefault(); this.classList.remove('active'); }, {passive:false});
+                    btn._touchBound = true;
+                });
+                canvas._snakeTouchBound = true;
+            }
+        }
+}
+
+function updateMenuHighscores() {
+    // Intentionally left blank: highscores are shown inside each game screen only.
 }
 
 function liveDifficultyChange(value) {
@@ -99,8 +128,11 @@ function updateSnake() {
     let head = { ...snake[0] };
     if(snakeDir === "RIGHT") head.x++; if(snakeDir === "LEFT") head.x--; if(snakeDir === "UP") head.y--; if(snakeDir === "DOWN") head.y++;
     if(head.x < 0 || head.x >= 15 || head.y < 0 || head.y >= 15 || snake.some(s => s.x === head.x && s.y === head.y)) {
-        document.getElementById('snake-score').innerText = "💀 Crashed! Score: " + snakeScore;
+        const isNew = saveHighscore("snake", snakeScore);
+        try { maybeAddHighscore("snake", snakeScore, false); } catch(e) { /* ignore */ }
+        document.getElementById('snake-score').innerText = `💀 Score: ${snakeScore} | ${formatHighscoresAll('snake', false)}${isNew ? " 🆕" : ""}`;
         document.getElementById('snake-start-btn').style.display = 'block';
+        updateMenuHighscores();
         clearInterval(gameInterval); return;
     }
     snake.unshift(head);
@@ -109,7 +141,7 @@ function updateSnake() {
     ctx.fillStyle = "#fdf8ef"; ctx.fillRect(0,0,300,300);
     ctx.fillStyle = "#c27a5a"; ctx.beginPath(); ctx.arc(food.x*20+10, food.y*20+10, 8, 0, Math.PI*2); ctx.fill(); // Rundes Futter
     ctx.fillStyle = "#6f8f72"; snake.forEach(s => ctx.fillRect(s.x*20+1, s.y*20+1, 18, 18));
-    document.getElementById('snake-score').innerText = "Score: " + snakeScore;
+    document.getElementById('snake-score').innerText = `Score: ${snakeScore} | ${formatHighscoresAll('snake', false)}`;
 }
 
 // FLAPPY BIRD
@@ -134,11 +166,14 @@ function updateFlappy(gap) {
     pipes.forEach(p => {
         p.x -= 2.5; ctx.fillRect(p.x, 0, 40, p.top); ctx.fillRect(p.x, p.top + gap, 40, 400);
         if(p.x < 68 && p.x > 12 && (birdY < p.top || birdY > p.top + gap - 18)) flappyActive = false;
-        if(p.x === 25) { flappyScore++; document.getElementById('flappy-score').innerText = "Score: " + flappyScore; }
+        if(p.x === 25) { flappyScore++; document.getElementById('flappy-score').innerText = `Score: ${flappyScore} | ${formatHighscoresAll('flappy', false)}`; }
     });
     if(birdY > 400 || birdY < 0 || !flappyActive) {
         clearInterval(gameInterval); document.getElementById('flappy-start-btn').style.display = 'block';
-        document.getElementById('flappy-score').innerText = "Game Over! Score: " + flappyScore;
+        const isNew = saveHighscore("flappy", flappyScore);
+        try { maybeAddHighscore("flappy", flappyScore, false); } catch(e) { /* ignore */ }
+        document.getElementById('flappy-score').innerText = `Game Over! Score: ${flappyScore} | ${formatHighscoresAll('flappy', false)}${isNew ? " 🆕" : ""}`;
+        updateMenuHighscores();
     }
     pipes = pipes.filter(p => p.x > -40);
 }
@@ -207,8 +242,11 @@ function clickReactionBox() {
         reactTimer = setTimeout(() => { box.classList.add('ready'); box.innerText = "JETZT KLICKEN!"; reactStart = Date.now(); }, Math.random()*delay + 1000);
     } else if(box.classList.contains('ready')) {
         let diff = Date.now() - reactStart;
-        document.getElementById('reaction-status').innerText = `Ergebnis: ${diff} ms!`;
+        const isNew = saveBestTime("reaction", diff);
+        try { maybeAddHighscore("reaction", diff, true); } catch(e) { /* ignore */ }
+        document.getElementById('reaction-status').innerText = `Ergebnis: ${diff} ms! | ${formatHighscoresAll('reaction', true)}${isNew ? " 🆕" : ""}`;
         box.classList.remove('ready'); box.innerText = "BEREIT FÜR NEUEN START"; reactionGameRunning = false;
+        updateMenuHighscores();
     } else {
         clearTimeout(reactTimer); reactionGameRunning = false; box.innerText = "ZU FRÜH!";
     }
@@ -241,6 +279,7 @@ function flipCard(card) {
 
 // BLOCK BLAST
 let blockBoard = [], blockPieces = [], selectedBlockPiece = null, blockScore = 0;
+let blockDrag = { pieceIndex: null, hoverX: null, hoverY: null };
 const blockShapes = [
     [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]],
     [[1,1],[1,1]], [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]],
@@ -266,22 +305,81 @@ function dealBlockPieces() {
 function renderBlockBlast(message) {
     const board = document.getElementById('blockblast-board');
     board.innerHTML = "";
+    const previewCells = new Set();
+    let previewInvalid = false;
+    if(blockDrag.pieceIndex !== null && blockDrag.hoverX !== null && blockDrag.hoverY !== null) {
+        const shape = blockPieces[blockDrag.pieceIndex].shape;
+        if(shape) {
+            previewInvalid = !canPlaceBlock(shape, blockDrag.hoverX, blockDrag.hoverY);
+            shape.forEach((row, dy) => row.forEach((v, dx) => {
+                if(v) {
+                    const prettyX = blockDrag.hoverX + dx;
+                    const prettyY = blockDrag.hoverY + dy;
+                    previewCells.add(`${prettyX},${prettyY}`);
+                }
+            }));
+        }
+    }
     for(let y = 0; y < 8; y++) {
         for(let x = 0; x < 8; x++) {
             const cell = document.createElement('button');
-            cell.className = "block-cell" + (blockBoard[y][x] ? " filled" : "");
-            cell.onclick = () => placeBlockPiece(x, y);
+            const isPreview = previewCells.has(`${x},${y}`);
+            let previewClass = "";
+            if(isPreview) previewClass = previewInvalid ? " invalid" : " preview";
+            cell.className = "block-cell" + (blockBoard[y][x] ? " filled" : "") + previewClass;
+            cell.dataset.x = x; cell.dataset.y = y;
+            cell.onpointerup = () => {
+                placeBlockPiece(x, y);
+                blockDrag.pieceIndex = null;
+                blockDrag.hoverX = null;
+                blockDrag.hoverY = null;
+            };
+            cell.onpointerenter = () => {
+                if(blockDrag.pieceIndex !== null) {
+                    selectedBlockPiece = blockDrag.pieceIndex;
+                    blockDrag.hoverX = x;
+                    blockDrag.hoverY = y;
+                    renderBlockBlast();
+                }
+            };
             board.appendChild(cell);
         }
     }
+    board.onpointerleave = () => {
+        if(blockDrag.pieceIndex !== null) {
+            blockDrag.hoverX = null;
+            blockDrag.hoverY = null;
+            renderBlockBlast();
+        }
+    };
 
     const rack = document.getElementById('blockblast-pieces');
     rack.innerHTML = "";
     blockPieces.forEach((piece, index) => {
         const holder = document.createElement('button');
-        holder.className = "block-piece" + (selectedBlockPiece === index ? " selected" : "") + (piece.used ? " used" : "");
-        holder.onclick = () => selectBlockPiece(index);
+        holder.className = "block-piece" + (selectedBlockPiece === index ? " selected" : "") + (piece.used ? " used" : "") + (blockDrag.pieceIndex === index ? " dragging" : "");
+        holder.dataset.index = index;
         holder.style.gridTemplateColumns = `repeat(${piece.shape[0].length}, 18px)`;
+        holder.onpointerdown = (e) => {
+            if(piece.used) return;
+            selectedBlockPiece = index;
+            blockDrag.pieceIndex = index;
+            blockDrag.hoverX = null;
+            blockDrag.hoverY = null;
+            e.preventDefault();
+            renderBlockBlast();
+        };
+        holder.onpointerup = () => {
+            blockDrag.pieceIndex = null;
+            blockDrag.hoverX = null;
+            blockDrag.hoverY = null;
+            renderBlockBlast();
+        };
+        holder.onpointerleave = () => {
+            if(blockDrag.pieceIndex === index) {
+                holder.classList.add('dragging');
+            }
+        };
         piece.shape.forEach(row => row.forEach(v => {
             const bit = document.createElement('span');
             bit.className = "piece-bit" + (v ? " filled" : "");
@@ -290,8 +388,13 @@ function renderBlockBlast(message) {
         rack.appendChild(holder);
     });
 
-    let status = message || `Score: ${blockScore}`;
-    if(!canAnyBlockPieceFit()) status = `Game Over! Score: ${blockScore}`;
+    let status = message || `Score: ${blockScore} | ${formatHighscoresAll('blockblast', false)}`;
+    if(!canAnyBlockPieceFit()) {
+        const isNew = saveHighscore("blockblast", blockScore);
+        try { maybeAddHighscore("blockblast", blockScore, false); } catch(e) { /* ignore */ }
+        status = `Game Over! Score: ${blockScore} | ${formatHighscoresAll('blockblast', false)}${isNew ? " 🆕" : ""}`;
+        updateMenuHighscores();
+    }
     document.getElementById('blockblast-status').innerText = status;
 }
 function selectBlockPiece(index) {
@@ -312,6 +415,9 @@ function placeBlockPiece(x, y) {
     blockScore += countShapeBlocks(piece.shape);
     piece.used = true;
     selectedBlockPiece = null;
+    blockDrag.pieceIndex = null;
+    blockDrag.hoverX = null;
+    blockDrag.hoverY = null;
     clearBlockLines();
     if(blockPieces.every(p => p.used)) dealBlockPieces();
     renderBlockBlast();
@@ -392,17 +498,31 @@ function chooseCategory(key) {
     scorecard[key] = calculateCategoryScore(key);
     rollCount = 0; keeps.fill(false);
     document.getElementById('roll-btn').disabled = false;
-    if(Object.keys(scorecard).length === Object.keys(categories).length) { document.getElementById('yatzy-status').innerText = "Spiel beendet!"; } 
+    if(Object.keys(scorecard).length === Object.keys(categories).length) {
+        const total = Object.values(scorecard).reduce((a,b)=>a+b,0);
+        const isNew = saveHighscore("yatzy", total);
+        try { maybeAddHighscore("yatzy", total, false); } catch(e) { /* ignore */ }
+        document.getElementById('yatzy-status').innerText = `Spiel beendet! Total: ${total} | ${formatHighscoresAll('yatzy', false)}${isNew ? " 🆕" : ""}`;
+        updateMenuHighscores();
+    }
     else { updateYatzyUI(); renderScorecard(); }
 }
 
 // WEITERE LOGIKEN
 let hlCurrent, hlScore;
-function initHighLow() { hlCurrent = Math.floor(Math.random()*100)+1; hlScore = 0; document.getElementById('current-card-val').innerText = hlCurrent; document.getElementById('hl-score').innerText = "Score: 0"; }
+function initHighLow() { hlCurrent = Math.floor(Math.random()*100)+1; hlScore = 0; document.getElementById('current-card-val').innerText = hlCurrent; document.getElementById('hl-score').innerText = `Score: 0 | ${formatHighscoresAll('highlow', false)}`; }
 function guessHighLow(g) {
     let nextNum = Math.floor(Math.random()*100)+1;
-    if((g==='higher'&&nextNum>=hlCurrent) || (g==='lower'&&nextNum<=hlCurrent)) { hlScore++; hlCurrent = nextNum; document.getElementById('current-card-val').innerText = hlCurrent; document.getElementById('hl-score').innerText = "Richtig! Score: "+hlScore; }
-    else document.getElementById('hl-score').innerText = `Falsch! Zahl war ${nextNum}. Game Over!`;
+    if((g==='higher'&&nextNum>=hlCurrent) || (g==='lower'&&nextNum<=hlCurrent)) {
+        hlScore++; hlCurrent = nextNum;
+        document.getElementById('current-card-val').innerText = hlCurrent;
+        document.getElementById('hl-score').innerText = `Richtig! Score: ${hlScore} | ${formatHighscoresAll('highlow', false)}`;
+    } else {
+        const isNew = saveHighscore("highlow", hlScore);
+        try { maybeAddHighscore("highlow", hlScore, false); } catch(e) { /* ignore */ }
+        document.getElementById('hl-score').innerText = `Falsch! Zahl war ${nextNum}. Game Over! Score: ${hlScore} | ${formatHighscoresAll('highlow', false)}${isNew ? " 🆕" : ""}`;
+        updateMenuHighscores();
+    }
 }
 let guessTarget, maxGuessRange;
 function initGuess() { maxGuessRange = diffMode === "easy" ? 50 : (diffMode === "medium" ? 100 : 250); guessTarget = Math.floor(Math.random()*maxGuessRange)+1; document.getElementById('guess-status').innerText = `Rate von 1 bis ${maxGuessRange}`; document.getElementById('guess-input').value = ""; }
@@ -642,3 +762,81 @@ function initHangman() { word = pool[Math.floor(Math.random()*wordPoolLength())]
 function wordPoolLength() { return pool.length; }
 function guessLetter(btn, l) { btn.disabled = true; guesses.push(l); if(!word.includes(l)) lives--; updateHangman(); }
 function updateHangman() { let str = word.split("").map(l => guesses.includes(l)?l:"_").join(" "); document.getElementById('hangman-word').innerText = str; document.getElementById('hangman-status').innerText = "Leben übrig: " + lives; if(!str.includes("_")) document.getElementById('hangman-status').innerText = "Gewonnen! 🏆"; if(lives <= 0) document.getElementById('hangman-status').innerText = "Verloren! Wort war: " + word; }
+
+// On load: show existing highscores on menu cards
+const HIGHSCORE_LIMIT = 10;
+
+function getHighscoresList(key, difficulty = diffMode) {
+    try { return JSON.parse(localStorage.getItem("gamehub-highscores-" + key + "-" + difficulty) || '[]'); } catch(e) { return []; }
+}
+
+function getHighscoresAll(key) {
+    return {
+        easy: getHighscore(key, 'easy'),
+        medium: getHighscore(key, 'medium'),
+        hard: getHighscore(key, 'hard')
+    };
+}
+
+function formatHighscoresAll(key, isTime) {
+    const h = getHighscoresAll(key);
+    if(isTime) return `⚡ Easy:${h.easy} ms | Norm:${h.medium} ms | Hard:${h.hard} ms`;
+    return `🏆 E:${h.easy} | N:${h.medium} | H:${h.hard}`;
+}
+
+function saveHighscoresList(key, list, difficulty = diffMode) {
+    localStorage.setItem("gamehub-highscores-" + key + "-" + difficulty, JSON.stringify(list));
+}
+
+function addHighscore(key, name, score, isTime, difficulty = diffMode) {
+    const list = getHighscoresList(key, difficulty);
+    list.push({ name: name || 'Player', score: Number(score), date: Date.now() });
+    list.sort((a,b) => (isTime ? a.score - b.score : b.score - a.score));
+    list.splice(HIGHSCORE_LIMIT);
+    saveHighscoresList(key, list, difficulty);
+}
+
+function maybeAddHighscore(key, score, isTime, difficulty = diffMode) {
+    const list = getHighscoresList(key, difficulty);
+    const qualifies = list.length < HIGHSCORE_LIMIT || (isTime ? score < list[list.length-1].score : score > list[list.length-1].score);
+    if(!qualifies) return false;
+    // Use stored player name or a default; do not prompt to avoid annoyance
+    let name = localStorage.getItem('gamehub-player-name') || 'Spieler';
+    addHighscore(key, name, score, isTime, difficulty);
+    if(isTime) saveBestTime(key, score, difficulty); else saveHighscore(key, score, difficulty);
+    updateMenuHighscores();
+    const sel = document.getElementById('hs-game-select'); if(sel && sel.value === key) showHighscores(key, difficulty);
+    return true;
+}
+
+function showHighscores(key, difficulty = diffMode) {
+    const list = getHighscoresList(key, difficulty);
+    const isTime = key === 'reaction';
+    const container = document.getElementById('hs-list');
+    if(!container) return;
+    if(list.length === 0) { container.innerHTML = `<div style="padding:12px;">Keine Einträge für ${key} (${difficulty}).</div>`; return; }
+    let html = '<ol class="hs-list" style="padding-left:18px; margin:0;">';
+    list.forEach(entry => {
+        html += `<li class="hs-entry" style="margin:8px 0; display:flex; justify-content:space-between;"><div><strong class="hs-name">${entry.name}</strong> <span style="color:var(--text-muted); font-size:0.85rem; margin-left:8px;">${new Date(entry.date).toLocaleDateString()}</span></div><div class="hs-score">${entry.score}${isTime ? ' ms' : ''}</div></li>`;
+    });
+    html += '</ol>';
+    container.innerHTML = html;
+}
+
+function clearHighscores(key, difficulty = diffMode) {
+    if(!confirm('Lösche Highscores für ' + key + ' (' + difficulty + ')?')) return;
+    localStorage.removeItem('gamehub-highscores-' + key + '-' + difficulty);
+    if(key === 'reaction') localStorage.removeItem('gamehub-besttime-' + key + '-' + difficulty); else localStorage.removeItem('gamehub-highscore-' + key + '-' + difficulty);
+    updateMenuHighscores();
+    showHighscores(key, difficulty);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    updateMenuHighscores();
+    // ensure highscores screen shows default selection
+    const sel = document.getElementById('hs-game-select');
+    const selDiff = document.getElementById('hs-diff-select');
+    const diff = selDiff ? selDiff.value : diffMode;
+    if(sel) showHighscores(sel.value || 'snake', diff);
+});
+
