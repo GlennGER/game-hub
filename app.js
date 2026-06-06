@@ -1,6 +1,36 @@
 let gameInterval;
 let diffMode = "medium";
 
+function getHighscore(key) {
+    return Number(localStorage.getItem("gamehub-highscore-" + key) || 0);
+}
+
+function saveHighscore(key, score) {
+    const best = getHighscore(key);
+    if(score > best) {
+        localStorage.setItem("gamehub-highscore-" + key, score);
+        return true;
+    }
+    return false;
+}
+
+function getBestTime(key) {
+    return Number(localStorage.getItem("gamehub-besttime-" + key) || 0);
+}
+
+function saveBestTime(key, time) {
+    const best = getBestTime(key);
+    if(!best || time < best) {
+        localStorage.setItem("gamehub-besttime-" + key, time);
+        return true;
+    }
+    return false;
+}
+
+function scoreText(label, score, key) {
+    return `${label}: ${score} | Highscore: ${getHighscore(key)}`;
+}
+
 function switchScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -14,6 +44,7 @@ function switchScreen(screenId) {
 
     if(screenId === 'game-tictactoe') resetTTT();
     if(screenId === 'game-memory') initMemory();
+    if(screenId === 'game-blockblast') initBlockBlast();
     if(screenId === 'game-highlow') initHighLow();
     if(screenId === 'game-guess') initGuess();
     if(screenId === 'game-clicker') initClicker();
@@ -28,6 +59,7 @@ function liveDifficultyChange(value) {
     if(activeScreen === 'game-snake' && document.getElementById('snake-start-btn').style.display === 'none') startSnake();
     if(activeScreen === 'game-flappy' && document.getElementById('flappy-start-btn').style.display === 'none') startFlappy();
     if(activeScreen === 'game-memory') initMemory();
+    if(activeScreen === 'game-blockblast') initBlockBlast();
     if(activeScreen === 'game-reaction') initReaction();
     if(activeScreen === 'game-guess') initGuess();
     if(activeScreen === 'game-hangman') initHangman();
@@ -47,6 +79,7 @@ let snake, snakeDir, food, snakeScore;
 function startSnake() {
     document.getElementById('snake-start-btn').style.display = 'none';
     snake = [{x: 8, y: 8}]; snakeDir = "RIGHT"; snakeScore = 0; generateFood();
+    document.getElementById('snake-score').innerText = scoreText("Score", snakeScore, "snake");
     let speed = diffMode === "easy" ? 170 : (diffMode === "medium" ? 110 : 65);
     clearInterval(gameInterval);
     gameInterval = setInterval(updateSnake, speed);
@@ -67,9 +100,9 @@ function updateSnake() {
     snake.unshift(head);
     if(head.x === food.x && head.y === food.y) { snakeScore++; generateFood(); } else { snake.pop(); }
     const ctx = document.getElementById("snakeCanvas").getContext("2d");
-    ctx.fillStyle = "#05050a"; ctx.fillRect(0,0,300,300);
-    ctx.fillStyle = "#ff3366"; ctx.beginPath(); ctx.arc(food.x*20+10, food.y*20+10, 8, 0, Math.PI*2); ctx.fill(); // Rundes Futter
-    ctx.fillStyle = "#00ffcc"; snake.forEach(s => ctx.fillRect(s.x*20+1, s.y*20+1, 18, 18));
+    ctx.fillStyle = "#fdf8ef"; ctx.fillRect(0,0,300,300);
+    ctx.fillStyle = "#c27a5a"; ctx.beginPath(); ctx.arc(food.x*20+10, food.y*20+10, 8, 0, Math.PI*2); ctx.fill(); // Rundes Futter
+    ctx.fillStyle = "#6f8f72"; snake.forEach(s => ctx.fillRect(s.x*20+1, s.y*20+1, 18, 18));
     document.getElementById('snake-score').innerText = "Score: " + snakeScore;
 }
 
@@ -90,8 +123,8 @@ function updateFlappy(gap) {
     }
     const canvas = document.getElementById("flappyCanvas"); const ctx = canvas.getContext("2d");
     ctx.clearRect(0,0,320,400); 
-    ctx.fillStyle = "#ffb703"; ctx.fillRect(50, birdY, 18, 18); // Vogel Farbe angepasst
-    ctx.fillStyle = "#9d4edd"; // Neon-Lila Hindernisse passend zum Design
+    ctx.fillStyle = "#d79a73"; ctx.fillRect(50, birdY, 18, 18); // Vogel Farbe angepasst
+    ctx.fillStyle = "#6f8f72";
     pipes.forEach(p => {
         p.x -= 2.5; ctx.fillRect(p.x, 0, 40, p.top); ctx.fillRect(p.x, p.top + gap, 40, 400);
         if(p.x < 68 && p.x > 12 && (birdY < p.top || birdY > p.top + gap - 18)) flappyActive = false;
@@ -109,7 +142,7 @@ let tttBoard = ["","","","","","","","",""], tttActive = true;
 function resetTTT() {
     tttBoard = ["","","","","","","","",""]; tttActive = true;
     document.getElementById('ttt-status').innerText = "Du bist X. Starte!";
-    document.querySelectorAll('.ttt-board .cell').forEach(c => { c.innerText = ""; c.style.color = "#fff"; });
+    document.querySelectorAll('.ttt-board .cell').forEach(c => { c.innerText = ""; c.style.color = "var(--text-color)"; });
 }
 function makeMove(i) {
     if(tttBoard[i] !== "" || !tttActive) return;
@@ -134,7 +167,7 @@ function botMove() {
     }
     tttBoard[choice] = "O"; 
     let cell = document.querySelectorAll('.ttt-board .cell')[choice];
-    cell.innerText = "O"; cell.style.color = "#9d4edd";
+    cell.innerText = "O"; cell.style.color = "#c27a5a";
     if(checkTTTWin("O")) { document.getElementById('ttt-status').innerText = "🤖 Bot gewinnt!"; }
     else if(!tttBoard.includes("")) { document.getElementById('ttt-status').innerText = "Remis! 🤝"; }
     else { tttActive = true; document.getElementById('ttt-status').innerText = "Deine Kugel..."; }
@@ -200,6 +233,104 @@ function flipCard(card) {
     }
 }
 
+// BLOCK BLAST
+let blockBoard = [], blockPieces = [], selectedBlockPiece = null, blockScore = 0;
+const blockShapes = [
+    [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]],
+    [[1,1],[1,1]], [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]],
+    [[1,0],[1,0],[1,1]], [[0,1],[0,1],[1,1]], [[1,1,1],[0,1,0]],
+    [[1,1,1],[1,0,0]], [[1,1,1],[0,0,1]]
+];
+function initBlockBlast() {
+    blockBoard = Array.from({ length: 8 }, () => Array(8).fill(0));
+    blockScore = 0;
+    selectedBlockPiece = null;
+    dealBlockPieces();
+    renderBlockBlast();
+}
+function dealBlockPieces() {
+    let pool = blockShapes.slice();
+    if(diffMode === "easy") pool = pool.slice(0, 8);
+    if(diffMode === "hard") pool = pool.slice(3);
+    blockPieces = Array.from({ length: 3 }, () => ({
+        shape: pool[Math.floor(Math.random() * pool.length)],
+        used: false
+    }));
+}
+function renderBlockBlast(message) {
+    const board = document.getElementById('blockblast-board');
+    board.innerHTML = "";
+    for(let y = 0; y < 8; y++) {
+        for(let x = 0; x < 8; x++) {
+            const cell = document.createElement('button');
+            cell.className = "block-cell" + (blockBoard[y][x] ? " filled" : "");
+            cell.onclick = () => placeBlockPiece(x, y);
+            board.appendChild(cell);
+        }
+    }
+
+    const rack = document.getElementById('blockblast-pieces');
+    rack.innerHTML = "";
+    blockPieces.forEach((piece, index) => {
+        const holder = document.createElement('button');
+        holder.className = "block-piece" + (selectedBlockPiece === index ? " selected" : "") + (piece.used ? " used" : "");
+        holder.onclick = () => selectBlockPiece(index);
+        holder.style.gridTemplateColumns = `repeat(${piece.shape[0].length}, 18px)`;
+        piece.shape.forEach(row => row.forEach(v => {
+            const bit = document.createElement('span');
+            bit.className = "piece-bit" + (v ? " filled" : "");
+            holder.appendChild(bit);
+        }));
+        rack.appendChild(holder);
+    });
+
+    let status = message || `Score: ${blockScore}`;
+    if(!canAnyBlockPieceFit()) status = `Game Over! Score: ${blockScore}`;
+    document.getElementById('blockblast-status').innerText = status;
+}
+function selectBlockPiece(index) {
+    if(blockPieces[index].used) return;
+    selectedBlockPiece = selectedBlockPiece === index ? null : index;
+    renderBlockBlast();
+}
+function placeBlockPiece(x, y) {
+    if(selectedBlockPiece === null) return;
+    const piece = blockPieces[selectedBlockPiece];
+    if(piece.used || !canPlaceBlock(piece.shape, x, y)) {
+        renderBlockBlast("Passt hier nicht.");
+        return;
+    }
+    piece.shape.forEach((row, dy) => row.forEach((v, dx) => {
+        if(v) blockBoard[y + dy][x + dx] = 1;
+    }));
+    blockScore += countShapeBlocks(piece.shape);
+    piece.used = true;
+    selectedBlockPiece = null;
+    clearBlockLines();
+    if(blockPieces.every(p => p.used)) dealBlockPieces();
+    renderBlockBlast();
+}
+function canPlaceBlock(shape, x, y) {
+    return shape.every((row, dy) => row.every((v, dx) => {
+        if(!v) return true;
+        return y + dy < 8 && x + dx < 8 && !blockBoard[y + dy][x + dx];
+    }));
+}
+function clearBlockLines() {
+    const rows = [], cols = [];
+    for(let y = 0; y < 8; y++) if(blockBoard[y].every(Boolean)) rows.push(y);
+    for(let x = 0; x < 8; x++) if(blockBoard.every(row => row[x])) cols.push(x);
+    rows.forEach(y => blockBoard[y].fill(0));
+    cols.forEach(x => blockBoard.forEach(row => row[x] = 0));
+    if(rows.length || cols.length) blockScore += (rows.length + cols.length) * 10;
+}
+function canAnyBlockPieceFit() {
+    return blockPieces.some(piece => !piece.used && blockBoard.some((row, y) => row.some((_, x) => canPlaceBlock(piece.shape, x, y))));
+}
+function countShapeBlocks(shape) {
+    return shape.reduce((sum, row) => sum + row.filter(Boolean).length, 0);
+}
+
 // YATZY
 let dice = [1,1,1,1,1], keeps = [false,false,false,false,false], rollCount = 0;
 let scorecard = {};
@@ -247,7 +378,7 @@ function renderScorecard() {
         html += `<div class="score-row ${isUsed?'used':''}" onclick="chooseCategory('${key}')"><span class="score-name">${categories[key]}</span><span class="score-val">${val}</span></div>`;
         if(isUsed) total += scorecard[key];
     }
-    html += `<div class="score-row used" style="font-weight:bold; color: #fff;"><span class="score-name">GESAMT:</span><span class="score-val">${total}</span></div>`;
+    html += `<div class="score-row used" style="font-weight:bold; color: var(--text-color);"><span class="score-name">GESAMT:</span><span class="score-val">${total}</span></div>`;
     document.getElementById('yatzy-scorecard').innerHTML = html;
 }
 function chooseCategory(key) {

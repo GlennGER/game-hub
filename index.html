@@ -21,6 +21,7 @@
                 <button class="game-card" onclick="switchScreen('game-yatzy')"><span class="icon">🎲</span><span class="title">Yatzy</span></button>
                 <button class="game-card" onclick="switchScreen('game-tictactoe')"><span class="icon">🤖</span><span class="title">Tic-Tac-Toe</span></button>
                 <button class="game-card" onclick="switchScreen('game-memory')"><span class="icon">🧠</span><span class="title">Memory</span></button>
+                <button class="game-card" onclick="switchScreen('game-blockblast')"><span class="icon">▦</span><span class="title">Block Blast</span></button>
                 <button class="game-card" onclick="switchScreen('game-highlow')"><span class="icon">🃏</span><span class="title">Höher / Tiefer</span></button>
                 <button class="game-card" onclick="switchScreen('game-guess')"><span class="icon">🔮</span><span class="title">Zahlen Raten</span></button>
                 <button class="game-card" onclick="switchScreen('game-clicker')"><span class="icon">🍪</span><span class="title">Clicker</span></button>
@@ -68,7 +69,7 @@
             <div class="game-navbar">
                 <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
                 <h2>Yatzy</h2>
-                <div style="width:60px"></div>
+                <button class="back-btn" onclick="initYatzy()">Neu</button>
             </div>
             <div id="yatzy-status" class="status-text">Wurf 0/3</div>
             <div class="dice-container" id="dice-row">
@@ -110,6 +111,21 @@
             <button class="action-btn" onclick="initMemory()">Neustart</button>
         </div>
 
+        <!-- BLOCK BLAST -->
+        <div id="game-blockblast" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Block Blast</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">Locker</option><option value="medium" selected>Normal</option><option value="hard">Knapp</option>
+                </select>
+            </div>
+            <div id="blockblast-status" class="status-text">Score: 0</div>
+            <div id="blockblast-board" class="blockblast-board"></div>
+            <div id="blockblast-pieces" class="blockblast-pieces"></div>
+            <button class="action-btn" onclick="initBlockBlast()">Neustart</button>
+        </div>
+
         <!-- REAKTIONSTEST -->
         <div id="game-reaction" class="screen">
             <div class="game-navbar">
@@ -132,7 +148,7 @@
                 <div style="width:60px"></div>
             </div>
             <div id="hl-score" class="status-text">Score: 0</div>
-            <div class="center-box"><p>Aktuelle Zahl:</p><h1 id="current-card-val" style="-webkit-text-fill-color: #fff; margin: 10px 0;">?</h1></div>
+            <div class="center-box"><p>Aktuelle Zahl:</p><h1 id="current-card-val" style="-webkit-text-fill-color: var(--text-color); margin: 10px 0;">?</h1></div>
             <div class="btn-group" style="display: flex; gap: 12px; margin-top: 20px;">
                 <button class="action-btn" onclick="guessHighLow('higher')">▲ Höher</button>
                 <button class="action-btn" onclick="guessHighLow('lower')">▼ Tiefer</button>
@@ -193,7 +209,7 @@
                     <option value="easy">8 Leben</option><option value="medium" selected>6 Leben</option><option value="hard">4 Leben</option>
                 </select>
             </div>
-            <div id="hangman-word" style="font-size: 2.2rem; letter-spacing: 6px; margin: 20px 0; font-weight: 800; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.25);">_ _ _ _</div>
+            <div id="hangman-word" style="font-size: 2.2rem; letter-spacing: 6px; margin: 20px 0; font-weight: 800; color: var(--text-color); text-shadow: none;">_ _ _ _</div>
             <div id="hangman-status" class="status-text">Leben: 6</div>
             <div id="hangman-keyboard" class="keyboard-grid"></div>
         </div>
