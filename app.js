@@ -1,5 +1,12 @@
 let gameInterval;
 let diffMode = "medium";
+let chessLevel = "medium";
+let chessBoard = [];
+let chessTurn = 'w';
+let chessSelected = null;
+let chessStatus = '';
+let chessLocked = false; // true while AI is thinking or move in progress
+let chessAITimer = null;
 
 function getHighscore(key, difficulty = diffMode) {
     return Number(localStorage.getItem("gamehub-highscore-" + key + "-" + difficulty) || 0);
@@ -43,7 +50,10 @@ function switchScreen(screenId) {
     }
 
     const activeSelect = document.querySelector(`#${screenId} .diff-select`);
-    if(activeSelect) activeSelect.value = diffMode;
+    if(activeSelect) {
+        if(screenId === 'game-chess') activeSelect.value = chessLevel;
+        else activeSelect.value = diffMode;
+    }
 
     if(document.getElementById('snake-start-btn')) document.getElementById('snake-start-btn').style.display = 'block';
     if(document.getElementById('flappy-start-btn')) document.getElementById('flappy-start-btn').style.display = 'block';
@@ -57,6 +67,7 @@ function switchScreen(screenId) {
     if(screenId === 'game-reaction') initReaction();
     if(screenId === 'game-hangman') initHangman();
     if(screenId === 'game-yatzy') initYatzy();
+    if(screenId === 'game-chess') initChess();
     if(screenId === 'main-menu') updateMenuHighscores();
         if(screenId === 'game-snake') {
             // Attach mobile swipe controls for snake canvas
@@ -98,6 +109,14 @@ function liveDifficultyChange(value) {
     if(activeScreen === 'game-reaction') initReaction();
     if(activeScreen === 'game-guess') initGuess();
     if(activeScreen === 'game-hangman') initHangman();
+}
+
+function liveChessLevelChange(value) {
+    chessLevel = value;
+    if(document.querySelector('.screen.active')?.id === 'game-chess') {
+        renderChessBoard();
+        if(chessLevel !== 'two' && chessTurn === 'b') setTimeout(() => aiMove(), 200);
+    }
 }
 
 window.addEventListener("keydown", function(e) {
@@ -261,8 +280,11 @@ function initMemory() {
     for(let i=0; i<count; i++) { gameSet.push(icons[i]); gameSet.push(icons[i]); }
     gameSet.sort(() => 0.5 - Math.random());
     flipped = [];
+    const board = document.getElementById('memory-board');
+    const cols = Math.ceil(Math.sqrt(gameSet.length));
+    board.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     document.getElementById('memory-status').innerText = `Paare zu finden: ${count}`;
-    document.getElementById('memory-board').innerHTML = gameSet.map(icon => `<div class="mem-card" data-icon="${icon}" onclick="flipCard(this)">${icon}</div>`).join('');
+    board.innerHTML = gameSet.map(icon => `<div class="mem-card" data-icon="${icon}" onclick="flipCard(this)">${icon}</div>`).join('');
 }
 function flipCard(card) {
     if(flipped.length >= 2 || card.classList.contains('flipped')) return;
@@ -532,13 +554,7 @@ function checkGuess() { let v = parseInt(document.getElementById('guess-input').
 let clickerState = {
     cookies: 0,
     clickPower: 1,
-    buildings: {
-        clickPowerLvl: 0,
-        cursor: 0,
-        grandma: 0,
-        bakery: 0,
-        factory: 0
-    }
+    buildings: {}
 };
 
 const clickerUpgrades = {
@@ -546,7 +562,17 @@ const clickerUpgrades = {
     cursor: { name: "Zeiger", cost: 15, costMultiplier: 1.15, value: 0.5, isClickPower: false, icon: "🖱️" },
     grandma: { name: "Oma", cost: 100, costMultiplier: 1.15, value: 4, isClickPower: false, icon: "👵" },
     bakery: { name: "Bäckerei", cost: 1100, costMultiplier: 1.15, value: 32, isClickPower: false, icon: "🏪" },
-    factory: { name: "Fabrik", cost: 12000, costMultiplier: 1.15, value: 260, isClickPower: false, icon: "🏭" }
+    factory: { name: "Fabrik", cost: 12000, costMultiplier: 1.15, value: 260, isClickPower: false, icon: "🏭" },
+    farm: { name: "Bauernhof", cost: 25000, costMultiplier: 1.14, value: 140, isClickPower: false, icon: "🌾" },
+    mine: { name: "Mine", cost: 140000, costMultiplier: 1.13, value: 800, isClickPower: false, icon: "⛏️" },
+    lab: { name: "Labor", cost: 560000, costMultiplier: 1.12, value: 3500, isClickPower: false, icon: "🧪" },
+    mall: { name: "Einkaufszentrum", cost: 2600000, costMultiplier: 1.12, value: 16000, isClickPower: false, icon: "🏬" },
+    portal: { name: "Portal", cost: 12000000, costMultiplier: 1.11, value: 82000, isClickPower: false, icon: "🌀" },
+    robot: { name: "Roboter", cost: 72000000, costMultiplier: 1.11, value: 420000, isClickPower: false, icon: "🤖" },
+    server: { name: "Serverfarm", cost: 320000000, costMultiplier: 1.10, value: 2300000, isClickPower: false, icon: "💾" },
+    station: { name: "Raumstation", cost: 1200000000, costMultiplier: 1.10, value: 12000000, isClickPower: false, icon: "🚀" },
+    observatory: { name: "Observatorium", cost: 5500000000, costMultiplier: 1.09, value: 62000000, isClickPower: false, icon: "🔭" },
+    universe: { name: "Universum", cost: 24000000000, costMultiplier: 1.09, value: 320000000, isClickPower: false, icon: "🌌" }
 };
 
 let clickerSaveTimer = 0;
@@ -686,14 +712,11 @@ function resetClicker() {
         clickerState = {
             cookies: 0,
             clickPower: 1,
-            buildings: {
-                clickPowerLvl: 0,
-                cursor: 0,
-                grandma: 0,
-                bakery: 0,
-                factory: 0
-            }
+            buildings: {}
         };
+        for (let key in clickerUpgrades) {
+            clickerState.buildings[key] = 0;
+        }
         saveClickerState();
         updateClickerUI();
     }
@@ -763,8 +786,385 @@ function wordPoolLength() { return pool.length; }
 function guessLetter(btn, l) { btn.disabled = true; guesses.push(l); if(!word.includes(l)) lives--; updateHangman(); }
 function updateHangman() { let str = word.split("").map(l => guesses.includes(l)?l:"_").join(" "); document.getElementById('hangman-word').innerText = str; document.getElementById('hangman-status').innerText = "Leben übrig: " + lives; if(!str.includes("_")) document.getElementById('hangman-status').innerText = "Gewonnen! 🏆"; if(lives <= 0) document.getElementById('hangman-status').innerText = "Verloren! Wort war: " + word; }
 
+function getPieceColor(piece) {
+    if(!piece) return null;
+    return piece === piece.toUpperCase() ? 'w' : 'b';
+}
+function isWhitePiece(piece) { return piece && piece === piece.toUpperCase(); }
+function isBlackPiece(piece) { return piece && piece === piece.toLowerCase(); }
+function inBounds(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
+function cloneBoard(board) { return board.map(row => row.slice()); }
+function chessPieceIcon(piece) {
+    return {
+        P: '♙', R: '♖', N: '♘', B: '♗', Q: '♕', K: '♔',
+        p: '♟︎', r: '♜', n: '♞', b: '♝', q: '♛', k: '♚'
+    }[piece] || '';
+}
+function initChess() {
+    if(chessAITimer) {
+        clearTimeout(chessAITimer);
+        chessAITimer = null;
+    }
+    chessLocked = false;
+    chessBoard = [
+        ['r','n','b','q','k','b','n','r'],
+        ['p','p','p','p','p','p','p','p'],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['P','P','P','P','P','P','P','P'],
+        ['R','N','B','Q','K','B','N','R']
+    ];
+    chessTurn = 'w';
+    chessSelected = null;
+    chessStatus = 'Weiß am Zug';
+    renderChessBoard();
+}
+function resetChess() { initChess(); }
+function updateChessStatus() {
+    const whiteKing = chessBoard.some(row => row.includes('K'));
+    const blackKing = chessBoard.some(row => row.includes('k'));
+    if(!whiteKing) {
+        chessStatus = 'Game over: Schwarz gewinnt!';
+        return;
+    }
+    if(!blackKing) {
+        chessStatus = 'Glückwunsch! Weiß gewinnt!';
+        return;
+    }
+    const moves = chessTurn === 'w' ? getAllMoves('w', chessBoard) : getAllMoves('b', chessBoard);
+    const inCheck = isInCheck(chessTurn, chessBoard);
+    if(moves.length === 0) {
+        if(inCheck) {
+            chessStatus = chessTurn === 'w' ? 'Schachmatt! Schwarz gewinnt!' : 'Schachmatt! Weiß gewinnt!';
+        } else {
+            chessStatus = 'Patt! Unentschieden!';
+        }
+        return;
+    }
+    if(inCheck) {
+        chessStatus = chessTurn === 'w' ? 'Weiß ist im Schach' : (chessLevel === 'two' ? 'Schwarz ist im Schach' : 'Bot ist im Schach');
+    } else {
+        chessStatus = chessTurn === 'w' ? 'Weiß am Zug' : (chessLevel === 'two' ? 'Schwarz am Zug' : 'Bot zieht...');
+    }
+    chessStatus += ` | Modus: ${chessLevel === 'two' ? '2 Spieler' : (chessLevel.charAt(0).toUpperCase() + chessLevel.slice(1))}`;
+}
+function renderChessBoard() {
+    const boardEl = document.getElementById('chess-board');
+    if(!boardEl) return;
+    const possible = chessSelected ? getLegalMoves(chessSelected.r, chessSelected.c, chessBoard) : [];
+    let html = '';
+    chessBoard.forEach((row, r) => {
+        row.forEach((piece, c) => {
+            const isSelected = chessSelected && chessSelected.r === r && chessSelected.c === c;
+            const isTarget = possible.some(m => m.r === r && m.c === c);
+            const colorClass = ((r + c) % 2 === 0) ? 'white' : 'black';
+            let content = '';
+            if(piece) {
+                const side = getPieceColor(piece);
+                content = `<span class="piece ${side === 'w' ? 'white-piece' : 'black-piece'}">${chessPieceIcon(piece)}</span>`;
+            }
+            html += `<div class="chess-cell ${colorClass}${isSelected ? ' selected' : ''}${isTarget ? ' move-target' : ''}" onclick="selectChessCell(${r}, ${c})">${content}</div>`;
+        });
+    });
+    boardEl.innerHTML = html;
+    updateChessStatus();
+    document.getElementById('chess-status').innerText = chessStatus;
+}
+function selectChessCell(r, c) {
+    // block input when AI is thinking or when it's not the human's turn in AI modes
+    if(chessLocked) return;
+    if(chessLevel !== 'two' && chessTurn !== 'w') return;
+    const piece = chessBoard[r][c];
+    // if something selected, attempt move
+    if(chessSelected) {
+        const legal = getLegalMoves(chessSelected.r, chessSelected.c, chessBoard);
+        const target = legal.find(move => move.r === r && move.c === c);
+        if(target) {
+            makeChessMove(chessSelected, target);
+            return;
+        }
+        // if clicked another own-piece, change selection
+        if(getPieceColor(piece) === chessTurn) {
+            chessSelected = { r, c };
+            renderChessBoard();
+            return;
+        }
+        chessSelected = null;
+        renderChessBoard();
+        return;
+    }
+    // select only if piece belongs to current player
+    if(getPieceColor(piece) === chessTurn) {
+        chessSelected = { r, c };
+        renderChessBoard();
+    }
+}
+function makeChessMove(from, to) {
+    const piece = chessBoard[from.r][from.c];
+    if(!piece) return;
+    chessBoard[to.r][to.c] = piece;
+    chessBoard[from.r][from.c] = '';
+    if(piece.toLowerCase() === 'p' && (to.r === 0 || to.r === 7)) {
+        chessBoard[to.r][to.c] = piece === piece.toUpperCase() ? 'Q' : 'q';
+    }
+    chessSelected = null;
+    // switch turn
+    chessTurn = chessTurn === 'w' ? 'b' : 'w';
+    renderChessBoard();
+    // if playing against AI and it's AI's turn, trigger AI
+    if(chessLevel !== 'two' && chessTurn === 'b') {
+        setTimeout(() => { aiMove(); }, 250);
+    }
+}
+function aiMove() {
+    chessLocked = true;
+    if(!chessBoard.some(row => row.includes('k')) || !chessBoard.some(row => row.includes('K'))) {
+        renderChessBoard();
+        chessLocked = false;
+        return;
+    }
+    const moves = getAllMoves('b', chessBoard);
+    if(moves.length === 0) {
+        chessStatus = 'Unentschieden!';
+        renderChessBoard();
+        chessLocked = false;
+        if(chessAITimer) { clearTimeout(chessAITimer); chessAITimer = null; }
+        return;
+    }
+    chessStatus = 'Bot denkt...';
+    renderChessBoard();
+    chessAITimer = setTimeout(() => {
+        let choice;
+        if(chessLevel === 'easy') {
+            choice = moves[Math.floor(Math.random() * moves.length)];
+        } else {
+            choice = chooseBestCaptureOrRandomMove(moves);
+        }
+        if(!choice) choice = moves[Math.floor(Math.random() * moves.length)];
+        applyAIMove(choice);
+        chessLocked = false;
+        chessAITimer = null;
+    }, 70);
+}
+function applyAIMove(move) {
+    if(!move) return;
+    const piece = chessBoard[move.from.r][move.from.c];
+    chessBoard[move.to.r][move.to.c] = piece;
+    chessBoard[move.from.r][move.from.c] = '';
+    if(piece.toLowerCase() === 'p' && (move.to.r === 0 || move.to.r === 7)) {
+        chessBoard[move.to.r][move.to.c] = piece === piece.toUpperCase() ? 'Q' : 'q';
+    }
+    chessTurn = 'w';
+    chessSelected = null;
+    renderChessBoard();
+}
+function getAllMoves(color, board) {
+    const moves = [];
+    board.forEach((row, r) => row.forEach((piece, c) => {
+        if(!piece) return;
+        if(getPieceColor(piece) !== color) return;
+        const legal = getLegalMoves(r, c, board);
+        legal.forEach(move => {
+            moves.push({ from: { r, c }, to: move, captured: !!board[move.r][move.c] });
+        });
+    }));
+    return moves;
+}
+function getLegalMoves(r, c, board) {
+    const piece = board[r][c];
+    if(!piece) return [];
+    const color = getPieceColor(piece);
+    const enemy = color === 'w' ? isBlackPiece : isWhitePiece;
+    const ally = color === 'w' ? isWhitePiece : isBlackPiece;
+    const rawMoves = [];
+    const addMove = (nr, nc) => {
+        if(!inBounds(nr, nc) || ally(board[nr][nc])) return false;
+        rawMoves.push({ r: nr, c: nc });
+        return !board[nr][nc];
+    };
+    const addStep = (dr, dc) => {
+        let nr = r + dr, nc = c + dc;
+        while(inBounds(nr, nc)) {
+            if(!addMove(nr, nc)) break;
+            nr += dr; nc += dc;
+        }
+    };
+    const lower = piece.toLowerCase();
+    if(lower === 'p') {
+        const dir = color === 'w' ? -1 : 1;
+        if(inBounds(r + dir, c) && !board[r + dir][c]) rawMoves.push({ r: r + dir, c });
+        if((color === 'w' && r === 6 || color === 'b' && r === 1) && inBounds(r + dir * 2, c) && !board[r + dir][c] && !board[r + dir * 2][c]) {
+            rawMoves.push({ r: r + dir * 2, c });
+        }
+        for(const dc of [-1, 1]) {
+            const nr = r + dir, nc = c + dc;
+            if(inBounds(nr, nc) && enemy(board[nr][nc])) rawMoves.push({ r: nr, c: nc });
+        }
+    } else if(lower === 'n') {
+        [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr, dc]) => addMove(r + dr, c + dc));
+    } else if(lower === 'b') {
+        [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr, dc]) => addStep(dr, dc));
+    } else if(lower === 'r') {
+        [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr, dc]) => addStep(dr, dc));
+    } else if(lower === 'q') {
+        [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr, dc]) => addStep(dr, dc));
+    } else if(lower === 'k') {
+        [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr, dc]) => addMove(r + dr, c + dc));
+    }
+    return rawMoves.filter(move => {
+        const copy = cloneBoard(board);
+        const moved = copy[r][c];
+        copy[move.r][move.c] = moved;
+        copy[r][c] = '';
+        if(moved.toLowerCase() === 'p' && (move.r === 0 || move.r === 7)) {
+            copy[move.r][move.c] = moved === moved.toUpperCase() ? 'Q' : 'q';
+        }
+        return !isInCheck(color, copy);
+    });
+}
+
+function findKing(color, board) {
+    const target = color === 'w' ? 'K' : 'k';
+    for(let r = 0; r < 8; r++) {
+        for(let c = 0; c < 8; c++) {
+            if(board[r][c] === target) return { r, c };
+        }
+    }
+    return null;
+}
+
+function isSquareAttacked(r, c, byColor, board) {
+    const enemyPawn = byColor === 'w' ? 'P' : 'p';
+    const pawnDir = byColor === 'w' ? -1 : 1;
+    const pawnRows = [{r:r - pawnDir, c: c-1}, {r:r - pawnDir, c: c+1}];
+    for(const pos of pawnRows) {
+        if(inBounds(pos.r, pos.c) && board[pos.r][pos.c] === enemyPawn) return true;
+    }
+    const knightOffsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+    for(const [dr, dc] of knightOffsets) {
+        const nr = r + dr, nc = c + dc;
+        if(inBounds(nr, nc) && board[nr][nc] === (byColor === 'w' ? 'N' : 'n')) return true;
+    }
+    const directions = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+    for(const [dr, dc] of directions) {
+        let nr = r + dr, nc = c + dc;
+        let distance = 1;
+        while(inBounds(nr, nc)) {
+            const piece = board[nr][nc];
+            if(piece) {
+                const expected = byColor === 'w' ? piece === piece.toUpperCase() : piece === piece.toLowerCase();
+                if(expected) {
+                    const lower = piece.toLowerCase();
+                    if(distance === 1 && lower === 'k') return true;
+                    if(lower === 'q') return true;
+                    if((lower === 'b' || lower === 'q') && Math.abs(dr) === Math.abs(dc)) return true;
+                    if((lower === 'r' || lower === 'q') && (dr === 0 || dc === 0)) return true;
+                }
+                break;
+            }
+            nr += dr; nc += dc; distance++;
+        }
+    }
+    return false;
+}
+
+function isInCheck(color, board) {
+    const king = findKing(color, board);
+    if(!king) return false;
+    const attacker = color === 'w' ? 'b' : 'w';
+    return isSquareAttacked(king.r, king.c, attacker, board);
+}
+
 // On load: show existing highscores on menu cards
 const HIGHSCORE_LIMIT = 10;
+
+function evaluateBoard(board) {
+    const values = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 50 };
+    let score = 0;
+    board.forEach(row => {
+        row.forEach(piece => {
+            if(!piece) return;
+            const v = values[piece.toLowerCase()] || 0;
+            // positive = advantage for black
+            score += piece === piece.toLowerCase() ? v : -v;
+        });
+    });
+    return score;
+}
+
+function minimax(board, depth, maximizing) {
+    const whiteKing = board.some(row => row.includes('K'));
+    const blackKing = board.some(row => row.includes('k'));
+    if(!whiteKing) return 10000;
+    if(!blackKing) return -10000;
+    if(depth === 0) return evaluateBoard(board);
+    const color = maximizing ? 'b' : 'w';
+    const moves = getAllMoves(color, board);
+    if(moves.length === 0) return evaluateBoard(board);
+    if(maximizing) {
+        let best = -Infinity;
+        for(const mv of moves) {
+            const copy = cloneBoard(board);
+            applyMoveOnBoard(copy, mv);
+            best = Math.max(best, minimax(copy, depth - 1, false));
+        }
+        return best;
+    } else {
+        let best = Infinity;
+        for(const mv of moves) {
+            const copy = cloneBoard(board);
+            applyMoveOnBoard(copy, mv);
+            best = Math.min(best, minimax(copy, depth - 1, true));
+        }
+        return best;
+    }
+}
+
+function chooseBestAIMove(moves, depth) {
+    let best = null; let bestScore = -Infinity;
+    for(const mv of moves) {
+        const copy = cloneBoard(chessBoard);
+        applyMoveOnBoard(copy, mv);
+        const sc = minimax(copy, depth - 1, false);
+        if(sc > bestScore) { bestScore = sc; best = mv; }
+    }
+    return best;
+}
+
+function chooseBestCaptureOrRandomMove(moves) {
+    const values = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+    let best = [];
+    let bestValue = -1;
+    for(const mv of moves) {
+        const target = chessBoard[mv.to.r][mv.to.c];
+        const value = target ? values[target.toLowerCase()] : 0;
+        if(value > bestValue) {
+            bestValue = value;
+            best = [mv];
+        } else if(value === bestValue) {
+            best.push(mv);
+        }
+    }
+    if(bestValue > 0) return best[Math.floor(Math.random() * best.length)];
+    return moves[Math.floor(Math.random() * moves.length)];
+}
+
+function chooseBestMaterialMove(moves) {
+    let best = null;
+    let bestScore = -Infinity;
+    for(const mv of moves) {
+        const copy = cloneBoard(chessBoard);
+        applyMoveOnBoard(copy, mv);
+        const sc = evaluateBoard(copy);
+        if(sc > bestScore) {
+            bestScore = sc;
+            best = mv;
+        }
+    }
+    return best;
+}
 
 function getHighscoresList(key, difficulty = diffMode) {
     try { return JSON.parse(localStorage.getItem("gamehub-highscores-" + key + "-" + difficulty) || '[]'); } catch(e) { return []; }

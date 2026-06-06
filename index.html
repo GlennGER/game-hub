@@ -28,39 +28,7 @@
                 <button class="game-card" onclick="switchScreen('game-reaction')"><span class="icon">⚡</span><span class="title">Reaktionstest</span></button>
                 <button class="game-card" onclick="switchScreen('game-rps')"><span class="icon">✊</span><span class="title">Schere-Stein</span></button>
                 <button class="game-card" onclick="switchScreen('game-hangman')"><span class="icon">🔤</span><span class="title">Wort Erraten</span></button>
-                <button class="game-card" onclick="switchScreen('highscores-screen')"><span class="icon">🏆</span><span class="title">Highscores</span></button>
-            </div>
-        </div>
-
-        <!-- HIGHSCORES -->
-        <div id="highscores-screen" class="screen">
-            <div class="game-navbar">
-                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
-                <h2>Highscores</h2>
-                <select id="hs-game-select" class="diff-select" onchange="showHighscores(this.value, document.getElementById('hs-diff-select').value)">
-                    <option value="snake">Snake</option>
-                    <option value="flappy">Flappy</option>
-                    <option value="blockblast">Block Blast</option>
-                    <option value="highlow">Höher/Tiefer</option>
-                    <option value="yatzy">Yatzy</option>
-                    <option value="reaction">Reaktion (ms)</option>
-                </select>
-            </div>
-            <div id="hs-controls" style="width:100%; max-width:780px; display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:12px;">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <div id="hs-note" class="status-text" style="text-align:left; font-size:0.95rem; color:var(--text-muted);">Top 10 Highscores. Bei Zeiten: niedriger ist besser.</div>
-                    <select id="hs-diff-select" class="diff-select" onchange="showHighscores(document.getElementById('hs-game-select').value, this.value)">
-                        <option value="easy">Easy</option>
-                        <option value="medium" selected>Normal</option>
-                        <option value="hard">Hard</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:8px;">
-                    <button class="action-btn" onclick="clearHighscores(document.getElementById('hs-game-select').value, document.getElementById('hs-diff-select').value)">Lösche Liste</button>
-                </div>
-            </div>
-            <div id="hs-list" class="center-box" style="width:100%; max-width:780px; text-align:left;">
-                <!-- Filled dynamically -->
+                <button class="game-card" onclick="switchScreen('game-chess')"><span class="icon">♟️</span><span class="title">Schach</span></button>
             </div>
         </div>
 
@@ -251,6 +219,26 @@
             <div id="hangman-word" style="font-size: 2.2rem; letter-spacing: 6px; margin: 20px 0; font-weight: 800; color: var(--text-color); text-shadow: none;">_ _ _ _</div>
             <div id="hangman-status" class="status-text">Leben: 6</div>
             <div id="hangman-keyboard" class="keyboard-grid"></div>
+        </div>
+
+        <!-- SCHACH -->
+        <div id="game-chess" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Schach</h2>
+                <select id="chess-level" class="diff-select" onchange="liveChessLevelChange(this.value)">
+                    <option value="easy">Bot: Easy</option>
+                    <option value="medium" selected>Bot: Medium</option>
+                    <option value="two">2 Spieler</option>
+                    <option value="hard">Bot: Hard</option>
+                </select>
+            </div>
+            <div id="chess-status" class="status-text">Weiß am Zug</div>
+            <div id="chess-board" class="chess-board"></div>
+            <div style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; justify-content:center; width:100%; max-width:420px;">
+                <button class="action-btn" onclick="initChess()">Neues Spiel</button>
+                <button class="action-btn" onclick="resetChess()">Reset</button>
+            </div>
         </div>
 
     </div>

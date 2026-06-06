@@ -291,7 +291,12 @@ canvas {
     display: grid; 
     gap: 8px; 
     margin-bottom: 20px; 
-    justify-content: center; 
+    width: min(420px, 92vw);
+    aspect-ratio: 1 / 1;
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+    grid-auto-rows: minmax(65px, 1fr);
+    align-content: center;
+    justify-content: center;
 }
 
 .mem-card { 
@@ -522,6 +527,37 @@ canvas {
     border: 1px solid var(--border-color);
     box-shadow: 0 10px 25px rgba(75, 62, 50, 0.12);
 }
+
+/* Chess board */
+.chess-board {
+    display: grid;
+    width: min(420px, 92vw);
+    max-width: 420px;
+    aspect-ratio: 1 / 1;
+    grid-template-columns: repeat(8, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.chess-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(18px, 2.8vw, 28px);
+    cursor: pointer;
+    user-select: none;
+}
+.chess-cell.white { background: #f6ecd9; }
+.chess-cell.black { background: #7b6f5f; color: #fffaf1; }
+.chess-cell.selected { outline: 3px solid rgba(111,143,114,0.45); }
+.chess-cell.move-target { box-shadow: inset 0 0 0 3px rgba(111,143,114,0.22); }
+
+.piece { font-size: 1.05em; line-height: 1; display:inline-flex; align-items:center; justify-content:center; width:70%; height:70%; border-radius:50%; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+.piece.white-piece { background: #ffffff; color: #111111; border: 1px solid rgba(0,0,0,0.08); }
+.piece.black-piece { background: #111111; color: #fffaf1; border: 1px solid rgba(255,255,255,0.06); }
+.chess-cell { position: relative; }
+.chess-cell .piece { z-index: 2; }
 
 .center-box p {
     color: var(--text-muted);
