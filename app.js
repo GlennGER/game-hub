@@ -57,6 +57,7 @@ function switchScreen(screenId) {
 
     if(document.getElementById('snake-start-btn')) document.getElementById('snake-start-btn').style.display = 'block';
     if(document.getElementById('flappy-start-btn')) document.getElementById('flappy-start-btn').style.display = 'block';
+    if(document.getElementById('traffic-start-btn')) document.getElementById('traffic-start-btn').style.display = 'block';
 
     if(screenId === 'game-tictactoe') resetTTT();
     if(screenId === 'game-memory') initMemory();
@@ -69,31 +70,46 @@ function switchScreen(screenId) {
     if(screenId === 'game-yatzy') initYatzy();
     if(screenId === 'game-chess') initChess();
     if(screenId === 'game-minesweeper') initMinesweeper();
+    if(screenId === 'game-traffic') initTraffic();
     if(screenId === 'main-menu') updateMenuHighscores();
-        if(screenId === 'game-snake') {
-            // Attach mobile swipe controls for snake canvas
-            const canvas = document.getElementById('snakeCanvas');
-            if(canvas && !canvas._snakeTouchBound) {
-                let tx = 0, ty = 0;
-                canvas.addEventListener('touchstart', function(e){
-                    const t = e.touches[0]; tx = t.clientX; ty = t.clientY; e.preventDefault();
-                }, {passive:false});
-                canvas.addEventListener('touchend', function(e){
-                    const t = e.changedTouches[0]; const dx = t.clientX - tx; const dy = t.clientY - ty; const absX = Math.abs(dx); const absY = Math.abs(dy);
-                    if(Math.max(absX, absY) < 24) return;
+
+    if(screenId === 'game-snake' || screenId === 'game-traffic') {
+        const canvas = document.getElementById(screenId === 'game-snake' ? 'snakeCanvas' : 'trafficCanvas');
+        if(canvas && !canvas._touchBound) {
+            let tx = 0, ty = 0;
+            canvas.addEventListener('touchstart', function(e){
+                const t = e.touches[0]; tx = t.clientX; ty = t.clientY; e.preventDefault();
+            }, {passive:false});
+            canvas.addEventListener('touchend', function(e){
+                const t = e.changedTouches[0]; const dx = t.clientX - tx; const dy = t.clientY - ty; const absX = Math.abs(dx); const absY = Math.abs(dy);
+                if(Math.max(absX, absY) < 24) return;
+                if(screenId === 'game-snake') {
                     if(absX > absY) { if(dx > 0) changeSnakeDir('RIGHT'); else changeSnakeDir('LEFT'); }
                     else { if(dy > 0) changeSnakeDir('DOWN'); else changeSnakeDir('UP'); }
-                    e.preventDefault();
+                } else {
+                    if(dx > 0) changeTrafficLane('RIGHT'); else changeTrafficLane('LEFT');
+                }
+                e.preventDefault();
+            }, {passive:false});
+
+            const mobileButtons = document.getElementById(screenId).querySelectorAll('.mobile-only .ctrl-btn');
+            mobileButtons.forEach(btn => {
+                if(btn._touchBound) return;
+                btn.addEventListener('touchstart', function(ev){
+                    ev.preventDefault();
+                    this.classList.add('active');
+                    const dir = this.dataset.dir;
+                    if(!dir) return;
+                    const activeScreen = document.querySelector('.screen.active')?.id;
+                    if(activeScreen === 'game-snake') changeSnakeDir(dir);
+                    else if(activeScreen === 'game-traffic') changeTrafficLane(dir);
                 }, {passive:false});
-                // bind touchstart to mobile control buttons for immediate response
-                document.querySelectorAll('.mobile-only .ctrl-btn').forEach(btn => {
-                    if(btn._touchBound) return; btn.addEventListener('touchstart', function(ev){ ev.preventDefault(); this.classList.add('active'); const dir = this.dataset.dir; if(dir) changeSnakeDir(dir); }, {passive:false});
-                    btn.addEventListener('touchend', function(ev){ ev.preventDefault(); this.classList.remove('active'); }, {passive:false});
-                    btn._touchBound = true;
-                });
-                canvas._snakeTouchBound = true;
-            }
+                btn.addEventListener('touchend', function(ev){ ev.preventDefault(); this.classList.remove('active'); }, {passive:false});
+                btn._touchBound = true;
+            });
+            canvas._touchBound = true;
         }
+    }
 }
 
 function updateMenuHighscores() {
@@ -105,9 +121,9 @@ function liveDifficultyChange(value) {
     const activeScreen = document.querySelector('.screen.active').id;
     if(activeScreen === 'game-snake' && document.getElementById('snake-start-btn').style.display === 'none') startSnake();
     if(activeScreen === 'game-flappy' && document.getElementById('flappy-start-btn').style.display === 'none') startFlappy();
+    if(activeScreen === 'game-traffic' && document.getElementById('traffic-start-btn').style.display === 'none') startTraffic();
     if(activeScreen === 'game-memory') initMemory();
     if(activeScreen === 'game-blockblast') initBlockBlast();
-    if(activeScreen === 'game-reaction') initReaction();
     if(activeScreen === 'game-guess') initGuess();
     if(activeScreen === 'game-hangman') initHangman();
 }
@@ -121,12 +137,22 @@ function liveChessLevelChange(value) {
 }
 
 window.addEventListener("keydown", function(e) {
+    const activeScreen = document.querySelector('.screen.active')?.id;
     if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.key || e.code)) {
-        if(document.getElementById('game-snake').classList.contains('active') || document.getElementById('game-flappy').classList.contains('active')) e.preventDefault();
+        if(activeScreen === 'game-snake' || activeScreen === 'game-flappy' || activeScreen === 'game-traffic') e.preventDefault();
     }
-    if(e.key === "ArrowUp") changeSnakeDir("UP"); if(e.key === "ArrowDown") changeSnakeDir("DOWN");
-    if(e.key === "ArrowLeft") changeSnakeDir("LEFT"); if(e.key === "ArrowRight") changeSnakeDir("RIGHT");
-    if(e.code === "Space") flappyJump();
+    if(activeScreen === 'game-snake') {
+        if(e.key === "ArrowUp") changeSnakeDir("UP");
+        if(e.key === "ArrowDown") changeSnakeDir("DOWN");
+        if(e.key === "ArrowLeft") changeSnakeDir("LEFT");
+        if(e.key === "ArrowRight") changeSnakeDir("RIGHT");
+    } else if(activeScreen === 'game-flappy') {
+        if(e.code === "Space") flappyJump();
+    } else if(activeScreen === 'game-traffic') {
+        if(e.key === "ArrowLeft") changeTrafficLane("LEFT");
+        if(e.key === "ArrowRight") changeTrafficLane("RIGHT");
+        if(e.code === "Space") startTraffic();
+    }
 });
 
 // SNAKE
@@ -198,6 +224,240 @@ function updateFlappy(gap) {
     pipes = pipes.filter(p => p.x > -40);
 }
 
+// TRAFFIC GAME
+let trafficCanvas, trafficCtx, trafficPlayer, trafficCars, trafficScore, trafficSpeed, trafficSpawnTimer, trafficActive;
+const trafficLaneCount = 5;
+const trafficRoadMargin = 18;
+const trafficCarWidth = 42;
+const trafficCarHeight = 90;
+
+function initTraffic() {
+    trafficCanvas = document.getElementById('trafficCanvas');
+    trafficCtx = trafficCanvas.getContext('2d');
+    trafficPlayer = {
+        lane: 2,
+        targetLane: 2,
+        x: 0,
+        y: trafficCanvas.height - trafficCarHeight - 18,
+        width: trafficCarWidth,
+        height: trafficCarHeight
+    };
+    trafficCars = [];
+    trafficScore = 0;
+    trafficSpeed = diffMode === 'easy' ? 1.8 : diffMode === 'medium' ? 3.2 : 4.6;
+    trafficSpawnTimer = 0;
+    trafficActive = false;
+    document.getElementById('traffic-start-btn').style.display = 'block';
+    document.getElementById('traffic-score').innerText = `Bereit? | ${formatHighscoresAll('traffic', false)}`;
+    trafficPlayer.x = laneCenterX(trafficPlayer.lane);
+    drawTraffic();
+}
+
+function startTraffic() {
+    document.getElementById('traffic-start-btn').style.display = 'none';
+    trafficPlayer.lane = 2;
+    trafficPlayer.targetLane = 2;
+    trafficPlayer.x = laneCenterX(trafficPlayer.lane);
+    trafficCars = [];
+    trafficScore = 0;
+    trafficActive = true;
+    trafficSpawnTimer = 0;
+    trafficSpeed = diffMode === 'easy' ? 1.8 : diffMode === 'medium' ? 3.2 : 4.6;
+    clearInterval(gameInterval);
+    gameInterval = setInterval(updateTraffic, 28);
+    updateTrafficScore();
+}
+
+function changeTrafficLane(direction) {
+    if(!trafficActive) return;
+    if(direction === 'LEFT' && trafficPlayer.targetLane > 0) trafficPlayer.targetLane--;
+    if(direction === 'RIGHT' && trafficPlayer.targetLane < trafficLaneCount - 1) trafficPlayer.targetLane++;
+}
+
+function updateTraffic() {
+    if(!trafficActive) return;
+    trafficSpawnTimer += 1;
+    const speedBase = diffMode === 'easy' ? 1.8 : diffMode === 'medium' ? 3.2 : 4.6;
+    const speedRamp = diffMode === 'easy' ? 0.025 : diffMode === 'medium' ? 0.045 : 0.08;
+    trafficSpeed = speedBase + trafficScore * speedRamp;
+
+    const spawnThreshold = diffMode === 'easy'
+        ? Math.max(70, 110 - trafficScore * 0.5)
+        : diffMode === 'medium'
+            ? Math.max(44, 84 - trafficScore * 0.8)
+            : Math.max(24, 58 - trafficScore * 1.0);
+
+    if(trafficSpawnTimer > spawnThreshold) {
+        trafficSpawnTimer = 0;
+        spawnTrafficCar();
+    }
+
+    for(const car of trafficCars) {
+        car.y += trafficSpeed;
+    }
+    trafficCars = trafficCars.filter(car => car.y < trafficCanvas.height + trafficCarHeight);
+
+    const targetX = laneCenterX(trafficPlayer.targetLane);
+    if(trafficPlayer.x < targetX) trafficPlayer.x = Math.min(targetX, trafficPlayer.x + 7);
+    if(trafficPlayer.x > targetX) trafficPlayer.x = Math.max(targetX, trafficPlayer.x - 7);
+
+    if(checkTrafficCollision()) {
+        trafficGameOver();
+        return;
+    }
+    trafficCars.forEach(car => {
+        if(!car.counted && car.y > trafficPlayer.y + trafficPlayer.height) {
+            car.counted = true;
+            trafficScore += 1;
+            updateTrafficScore();
+        }
+    });
+    drawTraffic();
+}
+
+function spawnTrafficCar() {
+    const lanes = [0, 1, 2, 3, 4];
+    const blocked = new Set(
+        trafficCars
+            .filter(c => c.y > -trafficCarHeight && c.y < trafficPlayer.y + trafficCarHeight * 0.4)
+            .map(c => c.lane)
+    );
+    const options = lanes.filter(l => !blocked.has(l));
+    if(options.length === 0) {
+        // Avoid full blockage: wait until one lane clears.
+        return;
+    }
+    const lane = options[Math.floor(Math.random() * options.length)];
+    trafficCars.push({ lane, y: -trafficCarHeight - Math.random() * 120, color: '#c27a5a', counted: false });
+}
+
+function laneCenterX(lane) {
+    const laneWidth = (trafficCanvas.width - trafficRoadMargin * 2) / trafficLaneCount;
+    return trafficRoadMargin + laneWidth * lane + (laneWidth - trafficCarWidth) / 2;
+}
+
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawCar(ctx, x, y, width, height, bodyColor, roofColor, headlightColor) {
+    ctx.fillStyle = bodyColor;
+    drawRoundedRect(ctx, x, y, width, height, Math.round(width * 0.18));
+
+    ctx.fillStyle = roofColor;
+    drawRoundedRect(ctx, x + width * 0.12, y + height * 0.08, width * 0.76, height * 0.32, Math.round(width * 0.14));
+
+    ctx.fillStyle = '#2a2f34';
+    ctx.fillRect(x + width * 0.14, y + height * 0.52, width * 0.72, height * 0.18);
+
+    ctx.fillStyle = headlightColor;
+    ctx.fillRect(x + 4, y + height * 0.58, width * 0.14, height * 0.12);
+    ctx.fillRect(x + width - 4 - width * 0.14, y + height * 0.58, width * 0.14, height * 0.12);
+
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x + width * 0.12, y + height - 12, width * 0.22, 8);
+    ctx.fillRect(x + width * 0.66, y + height - 12, width * 0.22, 8);
+
+    ctx.fillStyle = '#111';
+    const wheelSize = Math.round(width * 0.18);
+    ctx.beginPath();
+    ctx.arc(x + width * 0.2, y + height - 8, wheelSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + width * 0.8, y + height - 8, wheelSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawTraffic() {
+    const ctx = trafficCtx;
+    ctx.clearRect(0, 0, trafficCanvas.width, trafficCanvas.height);
+    const gradient = ctx.createLinearGradient(0, 0, 0, trafficCanvas.height);
+    gradient.addColorStop(0, '#4c5b66');
+    gradient.addColorStop(0.35, '#333f47');
+    gradient.addColorStop(1, '#1b1f22');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, trafficCanvas.width, trafficCanvas.height);
+
+    const roadWidth = trafficCanvas.width - trafficRoadMargin * 2;
+    const laneWidth = roadWidth / trafficLaneCount;
+    ctx.fillStyle = '#2c343b';
+    ctx.fillRect(trafficRoadMargin, 0, roadWidth, trafficCanvas.height);
+    ctx.strokeStyle = '#7e8b97';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(trafficRoadMargin, 0, roadWidth, trafficCanvas.height);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 2;
+    for(let i=1;i<trafficLaneCount;i++) {
+        ctx.setLineDash([16, 14]);
+        ctx.beginPath();
+        ctx.moveTo(trafficRoadMargin + i*laneWidth, 0);
+        ctx.lineTo(trafficRoadMargin + i*laneWidth, trafficCanvas.height);
+        ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#c2c7ca';
+    for(let y=0; y<trafficCanvas.height; y += 60) {
+        ctx.fillRect(trafficCanvas.width/2 - 4, y, 8, 32);
+    }
+
+    // Draw traffic cars
+    trafficCars.forEach(car => {
+        const x = laneCenterX(car.lane);
+        drawCar(ctx, x, car.y, trafficCarWidth, trafficCarHeight, car.color, '#9aa3af', '#fdf7e9');
+    });
+
+    // Draw player car
+    const px = trafficPlayer.x;
+    drawCar(ctx, px, trafficPlayer.y, trafficPlayer.width, trafficPlayer.height, '#8fae87', '#d6e3d7', '#fff9c8');
+}
+
+function checkTrafficCollision() {
+    const playerRect = {
+        x: trafficPlayer.x + 4,
+        y: trafficPlayer.y + 10,
+        width: trafficPlayer.width - 8,
+        height: trafficPlayer.height - 20
+    };
+    return trafficCars.some(car => {
+        const carX = laneCenterX(car.lane);
+        const carRect = {
+            x: carX + 4,
+            y: car.y + 6,
+            width: trafficCarWidth - 8,
+            height: trafficCarHeight - 12
+        };
+        return playerRect.x < carRect.x + carRect.width &&
+               playerRect.x + playerRect.width > carRect.x &&
+               playerRect.y < carRect.y + carRect.height &&
+               playerRect.y + playerRect.height > carRect.y;
+    });
+}
+
+function trafficGameOver() {
+    trafficActive = false;
+    clearInterval(gameInterval);
+    document.getElementById('traffic-start-btn').style.display = 'block';
+    const isNew = saveHighscore('traffic', trafficScore);
+    document.getElementById('traffic-score').innerText = `Game Over! Score: ${trafficScore} | ${formatHighscoresAll('traffic', false)}${isNew ? ' 🆕' : ''}`;
+    maybeAddHighscore('traffic', trafficScore, false);
+}
+
+function updateTrafficScore() {
+    document.getElementById('traffic-score').innerText = `Score: ${trafficScore} | ${formatHighscoresAll('traffic', false)}`;
+}
+
 // TIC-TAC-TOE
 let tttBoard = ["","","","","","","","",""], tttActive = true;
 function resetTTT() {
@@ -258,13 +518,12 @@ function clickReactionBox() {
     const box = document.getElementById('reaction-box');
     if(!reactionGameRunning && !box.classList.contains('ready')) {
         reactionGameRunning = true; box.innerText = "WARTE AUF GRÜN...";
-        let delay = diffMode === "easy" ? 4000 : (diffMode === "medium" ? 2500 : 1200);
-        reactTimer = setTimeout(() => { box.classList.add('ready'); box.innerText = "JETZT KLICKEN!"; reactStart = Date.now(); }, Math.random()*delay + 1000);
+        reactTimer = setTimeout(() => { box.classList.add('ready'); box.innerText = "JETZT KLICKEN!"; reactStart = Date.now(); }, Math.random()*2500 + 1000);
     } else if(box.classList.contains('ready')) {
         let diff = Date.now() - reactStart;
-        const isNew = saveBestTime("reaction", diff);
-        try { maybeAddHighscore("reaction", diff, true); } catch(e) { /* ignore */ }
-        document.getElementById('reaction-status').innerText = `Ergebnis: ${diff} ms! | ${formatHighscoresAll('reaction', true)}${isNew ? " 🆕" : ""}`;
+        const isNew = saveBestTime("reaction", diff, 'default');
+        try { maybeAddHighscore("reaction", diff, true, 'default'); } catch(e) { /* ignore */ }
+        document.getElementById('reaction-status').innerText = `Ergebnis: ${diff} ms! | ${formatBestTimeSingle('reaction')}${isNew ? " 🆕" : ""}`;
         box.classList.remove('ready'); box.innerText = "BEREIT FÜR NEUEN START"; reactionGameRunning = false;
         updateMenuHighscores();
     } else {
@@ -523,9 +782,9 @@ function chooseCategory(key) {
     document.getElementById('roll-btn').disabled = false;
     if(Object.keys(scorecard).length === Object.keys(categories).length) {
         const total = Object.values(scorecard).reduce((a,b)=>a+b,0);
-        const isNew = saveHighscore("yatzy", total);
-        try { maybeAddHighscore("yatzy", total, false); } catch(e) { /* ignore */ }
-        document.getElementById('yatzy-status').innerText = `Spiel beendet! Total: ${total} | ${formatHighscoresAll('yatzy', false)}${isNew ? " 🆕" : ""}`;
+        const isNew = saveGlobalHighscore("yatzy", total);
+        try { maybeAddHighscore("yatzy", total, false, 'default'); } catch(e) { /* ignore */ }
+        document.getElementById('yatzy-status').innerText = `Spiel beendet! Total: ${total} | ${formatHighscoreSingle('yatzy')}${isNew ? " 🆕" : ""}`;
         updateMenuHighscores();
     }
     else { updateYatzyUI(); renderScorecard(); }
@@ -533,17 +792,17 @@ function chooseCategory(key) {
 
 // WEITERE LOGIKEN
 let hlCurrent, hlScore;
-function initHighLow() { hlCurrent = Math.floor(Math.random()*100)+1; hlScore = 0; document.getElementById('current-card-val').innerText = hlCurrent; document.getElementById('hl-score').innerText = `Score: 0 | ${formatHighscoresAll('highlow', false)}`; }
+function initHighLow() { hlCurrent = Math.floor(Math.random()*100)+1; hlScore = 0; document.getElementById('current-card-val').innerText = hlCurrent; document.getElementById('hl-score').innerText = `Score: 0 | ${formatHighscoreSingle('highlow')}`; }
 function guessHighLow(g) {
     let nextNum = Math.floor(Math.random()*100)+1;
     if((g==='higher'&&nextNum>=hlCurrent) || (g==='lower'&&nextNum<=hlCurrent)) {
         hlScore++; hlCurrent = nextNum;
         document.getElementById('current-card-val').innerText = hlCurrent;
-        document.getElementById('hl-score').innerText = `Richtig! Score: ${hlScore} | ${formatHighscoresAll('highlow', false)}`;
+        document.getElementById('hl-score').innerText = `Richtig! Score: ${hlScore} | ${formatHighscoreSingle('highlow')}`;
     } else {
-        const isNew = saveHighscore("highlow", hlScore);
-        try { maybeAddHighscore("highlow", hlScore, false); } catch(e) { /* ignore */ }
-        document.getElementById('hl-score').innerText = `Falsch! Zahl war ${nextNum}. Game Over! Score: ${hlScore} | ${formatHighscoresAll('highlow', false)}${isNew ? " 🆕" : ""}`;
+        const isNew = saveGlobalHighscore("highlow", hlScore);
+        try { maybeAddHighscore("highlow", hlScore, false, 'default'); } catch(e) { /* ignore */ }
+        document.getElementById('hl-score').innerText = `Falsch! Zahl war ${nextNum}. Game Over! Score: ${hlScore} | ${formatHighscoreSingle('highlow')}${isNew ? " 🆕" : ""}`;
         updateMenuHighscores();
     }
 }
@@ -1183,6 +1442,22 @@ function formatHighscoresAll(key, isTime) {
     const h = getHighscoresAll(key);
     if(isTime) return `⚡ Easy:${h.easy} ms | Norm:${h.medium} ms | Hard:${h.hard} ms`;
     return `🏆 E:${h.easy} | N:${h.medium} | H:${h.hard}`;
+}
+
+function getGlobalHighscore(key) {
+    return getHighscore(key, 'default');
+}
+
+function saveGlobalHighscore(key, score) {
+    return saveHighscore(key, score, 'default');
+}
+
+function formatHighscoreSingle(key) {
+    return `🏆 Best: ${getGlobalHighscore(key)}`;
+}
+
+function formatBestTimeSingle(key) {
+    return `⚡ Best: ${getBestTime(key, 'default')} ms`;
 }
 
 function saveHighscoresList(key, list, difficulty = diffMode) {

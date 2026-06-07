@@ -18,6 +18,7 @@
             <div class="game-grid">
                 <button class="game-card" onclick="switchScreen('game-snake')"><span class="icon">🐍</span><span class="title">Snake</span></button>
                 <button class="game-card" onclick="switchScreen('game-flappy')"><span class="icon">🐦</span><span class="title">Flappy Bird</span></button>
+                <button class="game-card" onclick="switchScreen('game-traffic')"><span class="icon">🚗</span><span class="title">Traffic</span></button>
                 <button class="game-card" onclick="switchScreen('game-yatzy')"><span class="icon">🎲</span><span class="title">Yatzy</span></button>
                 <button class="game-card" onclick="switchScreen('game-tictactoe')"><span class="icon">🤖</span><span class="title">Tic-Tac-Toe</span></button>
                 <button class="game-card" onclick="switchScreen('game-memory')"><span class="icon">🧠</span><span class="title">Memory</span></button>
@@ -64,6 +65,26 @@
             <div id="flappy-score" class="status-text">Bereit?</div>
             <canvas id="flappyCanvas" width="320" height="400" onclick="flappyJump()"></canvas>
             <button id="flappy-start-btn" class="action-btn big" onclick="startFlappy()">SPIEL STARTEN</button>
+        </div>
+
+        <!-- TRAFFIC -->
+        <div id="game-traffic" class="screen">
+            <div class="game-navbar">
+                <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
+                <h2>Traffic</h2>
+                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
+                    <option value="easy">Easy</option><option value="medium" selected>Normal</option><option value="hard">Hard</option>
+                </select>
+            </div>
+            <div id="traffic-score" class="status-text">Vermeide den Verkehr!</div>
+            <canvas id="trafficCanvas" width="320" height="520"></canvas>
+            <button id="traffic-start-btn" class="action-btn big" onclick="startTraffic()">SPIEL STARTEN</button>
+            <div class="controls mobile-only">
+                <div style="display:flex; gap: 12px;">
+                    <button class="ctrl-btn" data-dir="LEFT" onclick="changeTrafficLane('LEFT')">◀</button>
+                    <button class="ctrl-btn" data-dir="RIGHT" onclick="changeTrafficLane('RIGHT')">▶</button>
+                </div>
+            </div>
         </div>
 
         <!-- YATZY -->
@@ -133,9 +154,7 @@
             <div class="game-navbar">
                 <button class="back-btn" onclick="switchScreen('main-menu')">⬅ Menü</button>
                 <h2>Reaktion</h2>
-                <select class="diff-select" onchange="liveDifficultyChange(this.value)">
-                    <option value="easy">Easy</option><option value="medium" selected>Normal</option><option value="hard">Hard</option>
-                </select>
+                <div style="width:60px"></div>
             </div>
             <div id="reaction-status" class="status-text">Klicke das Feld zum Starten!</div>
             <div id="reaction-box" onclick="clickReactionBox()">KLICK ZUM STARTEN</div>
