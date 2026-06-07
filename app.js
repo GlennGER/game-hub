@@ -8,6 +8,210 @@ let chessStatus = '';
 let chessLocked = false; // true while AI is thinking or move in progress
 let chessAITimer = null;
 
+// LANGUAGE SYSTEM
+let language = localStorage.getItem("gamehub-language") || "de";
+
+const translations = {
+    de: {
+        gameHub: "Game-Hub",
+        premiumSuite: "Premium Gaming Suite",
+        menu: "Menü",
+        settings: "⚙️ Einstellungen",
+        language: "Sprache",
+        languageEN: "English",
+        languageDE: "Deutsch",
+        easy: "Easy",
+        normal: "Normal",
+        hard: "Hard",
+        ready: "Bereit?",
+        startGame: "SPIEL STARTEN",
+        reset: "🔄 Reset",
+        new: "Neu",
+        ready: "Bereit?",
+        score: "Score",
+        highscore: "Highscore",
+        gameOver: "Game Over!",
+        back: "⬅ Menü",
+        flappyReady: "Bereit?",
+        trafficReady: "Vermeide den Verkehr!",
+        trafficGameOver: "Game Over! Score",
+        yatzuRoll: "Wurf",
+        yatzyGameEnd: "Spiel beendet! Total",
+        snakeReady: "Bereit?",
+    },
+    en: {
+        gameHub: "Game-Hub",
+        premiumSuite: "Premium Gaming Suite",
+        menu: "Menu",
+        settings: "⚙️ Settings",
+        language: "Language",
+        languageEN: "English",
+        languageDE: "German",
+        easy: "Easy",
+        normal: "Normal",
+        hard: "Hard",
+        ready: "Ready?",
+        startGame: "START GAME",
+        reset: "🔄 Reset",
+        new: "New",
+        ready: "Ready?",
+        score: "Score",
+        highscore: "Highscore",
+        gameOver: "Game Over!",
+        back: "⬅ Menu",
+        flappyReady: "Ready?",
+        trafficReady: "Avoid traffic!",
+        trafficGameOver: "Game Over! Score",
+        yatzuRoll: "Roll",
+        yatzyGameEnd: "Game ended! Total",
+        snakeReady: "Ready?",
+    }
+};
+
+function t(key) {
+    return translations[language]?.[key] || translations.de[key] || key;
+}
+
+Object.assign(translations.de, {
+    gameSnake: "Snake",
+    gameFlappy: "Flappy Bird",
+    gameTraffic: "Traffic",
+    gameYatzy: "Yatzy",
+    gameTictactoe: "Tic-Tac-Toe",
+    gameMemory: "Memory",
+    gameBlockblast: "Block Blast",
+    gameHighlow: "Höher / Tiefer",
+    gameGuess: "Zahlen Raten",
+    gameClicker: "Cookie Clicker",
+    gameReaction: "Reaktionstest",
+    gameRps: "Schere Stein Papier",
+    gameHangman: "Wort Erraten",
+    gameChess: "Schach",
+    gameMinesweeper: "Minesweeper",
+    restart: "Neustart",
+    newGame: "Neues Spiel",
+    rollButton: "🎲 Würfeln",
+    submit: "Tippen",
+    currentNumber: "Aktuelle Zahl:",
+    chooseWeapon: "Wähle deine Waffe!",
+    rock: "✊ Stein",
+    paper: "✋ Papier",
+    scissors: "✌️ Schere",
+    botEasy: "Bot: Easy",
+    botMedium: "Bot: Medium",
+    botHard: "Bot: Hard",
+    twoPlayers: "2 Spieler",
+    lives8: "8 Leben",
+    lives6: "6 Leben",
+    lives4: "4 Leben",
+    small: "Klein",
+    large: "Groß",
+    loose: "Locker",
+    tight: "Knapp",
+    smartBot: "Bot: Schlau",
+    sillyBot: "Bot: Dumm",
+    whiteTurn: "Weiß am Zug",
+    blackTurn: "Schwarz am Zug",
+    botThinking: "Bot zieht...",
+    botThinks: "Bot denkt...",
+    whiteCheck: "Weiß ist im Schach",
+    blackCheck: "Schwarz ist im Schach",
+    botCheck: "Bot ist im Schach",
+    blackWins: "Schwarz gewinnt!",
+    whiteWins: "Weiß gewinnt!",
+    whiteCongrats: "Glückwunsch! Weiß gewinnt!",
+    checkmateBlack: "Schachmatt! Schwarz gewinnt!",
+    checkmateWhite: "Schachmatt! Weiß gewinnt!",
+    stalemate: "Patt! Unentschieden!",
+    drawGame: "Unentschieden!",
+    mode: "Modus",
+    flags: "Flaggen",
+    revealed: "Enthüllt",
+    boom: "Spiel vorbei! BOOM!",
+    minesWon: "Du hast gewonnen!",
+    pairsFind: "Paare finden",
+    clickUnit: "pro Sekunde",
+    clickPower: "Klick"
+});
+
+Object.assign(translations.en, {
+    gameSnake: "Snake",
+    gameFlappy: "Flappy Bird",
+    gameTraffic: "Traffic",
+    gameYatzy: "Yatzy",
+    gameTictactoe: "Tic-Tac-Toe",
+    gameMemory: "Memory",
+    gameBlockblast: "Block Blast",
+    gameHighlow: "Higher / Lower",
+    gameGuess: "Guess Number",
+    gameClicker: "Cookie Clicker",
+    gameReaction: "Reaction Test",
+    gameRps: "Rock Paper Scissors",
+    gameHangman: "Guess Word",
+    gameChess: "Chess",
+    gameMinesweeper: "Minesweeper",
+    restart: "Restart",
+    newGame: "New Game",
+    rollButton: "🎲 Roll",
+    submit: "Submit",
+    currentNumber: "Current number:",
+    chooseWeapon: "Choose your move!",
+    rock: "✊ Rock",
+    paper: "✋ Paper",
+    scissors: "✌️ Scissors",
+    botEasy: "Bot: Easy",
+    botMedium: "Bot: Medium",
+    botHard: "Bot: Hard",
+    twoPlayers: "2 Players",
+    lives8: "8 Lives",
+    lives6: "6 Lives",
+    lives4: "4 Lives",
+    small: "Small",
+    large: "Large",
+    loose: "Relaxed",
+    tight: "Tight",
+    smartBot: "Bot: Smart",
+    sillyBot: "Bot: Silly",
+    whiteTurn: "White to move",
+    blackTurn: "Black to move",
+    botThinking: "Bot is moving...",
+    botThinks: "Bot is thinking...",
+    whiteCheck: "White is in check",
+    blackCheck: "Black is in check",
+    botCheck: "Bot is in check",
+    blackWins: "Black wins!",
+    whiteWins: "White wins!",
+    whiteCongrats: "Congrats! White wins!",
+    checkmateBlack: "Checkmate! Black wins!",
+    checkmateWhite: "Checkmate! White wins!",
+    stalemate: "Stalemate! Draw!",
+    drawGame: "Draw!",
+    mode: "Mode",
+    flags: "Flags",
+    revealed: "Revealed",
+    boom: "Game over! BOOM!",
+    minesWon: "You won!",
+    pairsFind: "Find pairs",
+    clickUnit: "per second",
+    clickPower: "Click"
+});
+
+function setLanguage(lang) {
+    language = lang;
+    localStorage.setItem("gamehub-language", lang);
+    updateUILanguage();
+    const activeScreen = document.querySelector('.screen.active')?.id;
+    if(activeScreen === 'game-chess') renderChessBoard();
+    if(activeScreen === 'game-minesweeper') updateMinesweeperStatus();
+    if(activeScreen === 'game-reaction') initReaction();
+    if(activeScreen === 'game-rps') document.getElementById('rps-status').innerText = t('chooseWeapon');
+    if(activeScreen === 'game-guess') initGuess();
+    if(activeScreen === 'game-memory') initMemory();
+    if(activeScreen === 'game-hangman') initHangman();
+    if(activeScreen === 'game-yatzy') updateYatzyUI();
+    if(activeScreen === 'game-highlow') document.querySelector('#game-highlow .center-box p').innerText = t('currentNumber');
+}
+
 function getHighscore(key, difficulty = diffMode) {
     return Number(localStorage.getItem("gamehub-highscore-" + key + "-" + difficulty) || 0);
 }
@@ -59,6 +263,7 @@ function switchScreen(screenId) {
     if(document.getElementById('flappy-start-btn')) document.getElementById('flappy-start-btn').style.display = 'block';
     if(document.getElementById('traffic-start-btn')) document.getElementById('traffic-start-btn').style.display = 'block';
 
+    if(screenId === 'settings') updateUILanguage();
     if(screenId === 'game-tictactoe') resetTTT();
     if(screenId === 'game-memory') initMemory();
     if(screenId === 'game-blockblast') initBlockBlast();
@@ -110,6 +315,93 @@ function switchScreen(screenId) {
             canvas._touchBound = true;
         }
     }
+}
+
+function updateUILanguage() {
+    const langSelect = document.getElementById('lang-select');
+    if(langSelect) langSelect.value = language;
+    const menuLangSelect = document.getElementById('language-select');
+    if(menuLangSelect) menuLangSelect.value = language;
+    document.documentElement.lang = language;
+
+    const set = (selector, value) => {
+        const element = document.querySelector(selector);
+        if(element) element.innerText = value;
+    };
+    const setAll = (selector, value) => document.querySelectorAll(selector).forEach(el => el.innerText = value);
+    const setOption = (selector, value) => {
+        const element = document.querySelector(selector);
+        if(element) element.textContent = value;
+    };
+
+    set('.subtitle', t('premiumSuite'));
+    set('#settings h2', t('settings').replace(/^.*? /, ''));
+    set('#settings label[for="lang-select"]', t('language') + ':');
+    setAll('.back-btn[onclick="switchScreen(\'main-menu\')"]', t('back'));
+
+    const games = {
+        snake: 'gameSnake',
+        flappy: 'gameFlappy',
+        traffic: 'gameTraffic',
+        yatzy: 'gameYatzy',
+        tictactoe: 'gameTictactoe',
+        memory: 'gameMemory',
+        blockblast: 'gameBlockblast',
+        highlow: 'gameHighlow',
+        guess: 'gameGuess',
+        clicker: 'gameClicker',
+        reaction: 'gameReaction',
+        rps: 'gameRps',
+        hangman: 'gameHangman',
+        chess: 'gameChess',
+        minesweeper: 'gameMinesweeper'
+    };
+    Object.entries(games).forEach(([id, key]) => {
+        set(`.game-card[onclick="switchScreen('game-${id}')"] .title`, t(key));
+        set(`#game-${id} h2`, t(key));
+    });
+
+    set('#snake-start-btn', t('startGame'));
+    set('#flappy-start-btn', t('startGame'));
+    set('#traffic-start-btn', t('startGame'));
+    set('#roll-btn', t('rollButton'));
+    set('#game-yatzy .game-navbar .back-btn:last-child', t('new'));
+    set('#game-tictactoe .action-btn', t('restart'));
+    set('#game-memory .action-btn', t('restart'));
+    set('#game-blockblast .action-btn', t('restart'));
+    set('#game-reaction .action-btn', t('reset'));
+    set('#game-guess .action-btn', t('submit'));
+    set('#game-minesweeper .action-btn', t('newGame'));
+    set('#game-chess .action-btn:first-child', t('newGame'));
+    set('#game-chess .action-btn:last-child', 'Reset');
+    set('#game-highlow .center-box p', t('currentNumber'));
+    set('#rps-status', t('chooseWeapon'));
+    set('#game-rps .action-btn:nth-child(1)', t('rock'));
+    set('#game-rps .action-btn:nth-child(2)', t('paper'));
+    set('#game-rps .action-btn:nth-child(3)', t('scissors'));
+
+    const guessInput = document.getElementById('guess-input');
+    if(guessInput) guessInput.placeholder = language === 'en' ? 'Number' : 'Zahl';
+
+    setOption('#game-tictactoe option[value="easy"]', t('sillyBot'));
+    setOption('#game-tictactoe option[value="hard"]', t('smartBot'));
+    setOption('#game-memory option[value="easy"]', t('small'));
+    setOption('#game-memory option[value="medium"]', t('normal'));
+    setOption('#game-memory option[value="hard"]', t('large'));
+    setOption('#game-blockblast option[value="easy"]', t('loose'));
+    setOption('#game-blockblast option[value="medium"]', t('normal'));
+    setOption('#game-blockblast option[value="hard"]', t('tight'));
+    setOption('#game-hangman option[value="easy"]', t('lives8'));
+    setOption('#game-hangman option[value="medium"]', t('lives6'));
+    setOption('#game-hangman option[value="hard"]', t('lives4'));
+    setOption('#chess-level option[value="easy"]', t('botEasy'));
+    setOption('#chess-level option[value="medium"]', t('botMedium'));
+    setOption('#chess-level option[value="two"]', t('twoPlayers'));
+    setOption('#chess-level option[value="hard"]', t('botHard'));
+
+    document.querySelectorAll('.diff-select option[value="medium"]').forEach(option => {
+        if(!option.closest('#chess-level') && !option.closest('#game-hangman') && !option.closest('#game-memory') && !option.closest('#game-blockblast')) option.textContent = t('normal');
+    });
 }
 
 function updateMenuHighscores() {
@@ -512,7 +804,7 @@ let reactTimer, reactStart, reactionGameRunning = false;
 function initReaction() {
     clearTimeout(reactTimer); reactionGameRunning = false;
     const box = document.getElementById('reaction-box');
-    box.classList.remove('ready'); box.innerText = "KLICK MICH ZUM STARTEN";
+    box.classList.remove('ready'); box.innerText = language === 'en' ? "CLICK TO START" : "KLICK MICH ZUM STARTEN";
 }
 function clickReactionBox() {
     const box = document.getElementById('reaction-box');
@@ -543,7 +835,7 @@ function initMemory() {
     const board = document.getElementById('memory-board');
     const cols = Math.ceil(Math.sqrt(gameSet.length));
     board.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-    document.getElementById('memory-status').innerText = `Paare zu finden: ${count}`;
+    document.getElementById('memory-status').innerText = language === 'en' ? `Pairs to find: ${count}` : `Paare zu finden: ${count}`;
     board.innerHTML = gameSet.map(icon => `<div class="mem-card" data-icon="${icon}" onclick="flipCard(this)">${icon}</div>`).join('');
 }
 function flipCard(card) {
@@ -670,7 +962,7 @@ function renderBlockBlast(message) {
         rack.appendChild(holder);
     });
 
-    let status = message || `Score: ${blockScore} | ${formatHighscoresAll('blockblast', false)}`;
+    let status = message || `${t('score')}: ${blockScore} | ${formatHighscoresAll('blockblast', false)}`;
     if(!canAnyBlockPieceFit()) {
         const isNew = saveHighscore("blockblast", blockScore);
         try { maybeAddHighscore("blockblast", blockScore, false); } catch(e) { /* ignore */ }
@@ -688,7 +980,7 @@ function placeBlockPiece(x, y) {
     if(selectedBlockPiece === null) return;
     const piece = blockPieces[selectedBlockPiece];
     if(piece.used || !canPlaceBlock(piece.shape, x, y)) {
-        renderBlockBlast("Passt hier nicht.");
+        renderBlockBlast(language === "en" ? "Doesn't fit here." : "Passt hier nicht.");
         return;
     }
     piece.shape.forEach((row, dy) => row.forEach((v, dx) => {
@@ -731,7 +1023,7 @@ let scorecard = {};
 const categories = { ones:"Einser", twos:"Zweier", threes:"Dreier", fours:"Vierer", fives:"Fünfer", sixes:"Sechser", triple:"Dreierpasch", quad:"Viererpasch", fullhouse:"Full House (25)", pass:"Kleine Straße (30)", largepass:"Große Straße (40)", yatzy:"YATZY (50)", chance:"Chance" };
 function initYatzy() { rollCount = 0; scorecard = {}; keeps.fill(false); document.getElementById('roll-btn').disabled = false; updateYatzyUI(); renderScorecard(); }
 function updateYatzyUI() {
-    document.getElementById('yatzy-status').innerText = `Wurf ${rollCount}/3`;
+    document.getElementById('yatzy-status').innerText = `${t('yatzuRoll')} ${rollCount}/3`;
     const symbols = ["","⚀","⚁","⚂","⚃","⚄","⚅"];
     dice.forEach((val, i) => {
         let die = document.getElementById('dice-row').children[i];
@@ -792,13 +1084,13 @@ function chooseCategory(key) {
 
 // WEITERE LOGIKEN
 let hlCurrent, hlScore;
-function initHighLow() { hlCurrent = Math.floor(Math.random()*100)+1; hlScore = 0; document.getElementById('current-card-val').innerText = hlCurrent; document.getElementById('hl-score').innerText = `Score: 0 | ${formatHighscoreSingle('highlow')}`; }
+function initHighLow() { hlCurrent = Math.floor(Math.random()*100)+1; hlScore = 0; document.getElementById('current-card-val').innerText = hlCurrent; document.getElementById('hl-score').innerText = `${t('score')}: 0 | ${formatHighscoreSingle('highlow')}`; }
 function guessHighLow(g) {
     let nextNum = Math.floor(Math.random()*100)+1;
     if((g==='higher'&&nextNum>=hlCurrent) || (g==='lower'&&nextNum<=hlCurrent)) {
         hlScore++; hlCurrent = nextNum;
         document.getElementById('current-card-val').innerText = hlCurrent;
-        document.getElementById('hl-score').innerText = `Richtig! Score: ${hlScore} | ${formatHighscoreSingle('highlow')}`;
+        document.getElementById('hl-score').innerText = `${language === 'en' ? 'Correct!' : 'Richtig!'} ${t('score')}: ${hlScore} | ${formatHighscoreSingle('highlow')}`;
     } else {
         const isNew = saveGlobalHighscore("highlow", hlScore);
         try { maybeAddHighscore("highlow", hlScore, false, 'default'); } catch(e) { /* ignore */ }
@@ -807,8 +1099,24 @@ function guessHighLow(g) {
     }
 }
 let guessTarget, maxGuessRange;
-function initGuess() { maxGuessRange = diffMode === "easy" ? 50 : (diffMode === "medium" ? 100 : 250); guessTarget = Math.floor(Math.random()*maxGuessRange)+1; document.getElementById('guess-status').innerText = `Rate von 1 bis ${maxGuessRange}`; document.getElementById('guess-input').value = ""; }
-function checkGuess() { let v = parseInt(document.getElementById('guess-input').value); if(v === guessTarget) document.getElementById('guess-status').innerText = "🎉 Gefunden!"; else if(v < guessTarget) document.getElementById('guess-status').innerText = "Höher! 📈"; else document.getElementById('guess-status').innerText = "Tiefer! 📉"; }
+function initGuess() { maxGuessRange = diffMode === "easy" ? 50 : (diffMode === "medium" ? 100 : 250); guessTarget = Math.floor(Math.random()*maxGuessRange)+1; document.getElementById('guess-status').innerText = language === 'en' ? `Guess from 1 to ${maxGuessRange}` : `Rate von 1 bis ${maxGuessRange}`; document.getElementById('guess-input').value = ""; }
+function checkGuess() { let v = parseInt(document.getElementById('guess-input').value); if(v === guessTarget) document.getElementById('guess-status').innerText = language === 'en' ? "🎉 Found!" : "🎉 Gefunden!"; else if(v < guessTarget) document.getElementById('guess-status').innerText = language === 'en' ? "Higher! 📈" : "Höher! 📈"; else document.getElementById('guess-status').innerText = language === 'en' ? "Lower! 📉" : "Tiefer! 📉"; }
+
+function guessHighLow(g) {
+    let nextNum = Math.floor(Math.random()*100)+1;
+    if((g==='higher'&&nextNum>=hlCurrent) || (g==='lower'&&nextNum<=hlCurrent)) {
+        hlScore++; hlCurrent = nextNum;
+        document.getElementById('current-card-val').innerText = hlCurrent;
+        document.getElementById('hl-score').innerText = `${language === 'en' ? 'Correct!' : 'Richtig!'} ${t('score')}: ${hlScore} | ${formatHighscoreSingle('highlow')}`;
+    } else {
+        const isNew = saveGlobalHighscore("highlow", hlScore);
+        try { maybeAddHighscore("highlow", hlScore, false, 'default'); } catch(e) { /* ignore */ }
+        document.getElementById('hl-score').innerText = language === 'en'
+            ? `Wrong! Number was ${nextNum}. ${t('gameOver')} ${t('score')}: ${hlScore} | ${formatHighscoreSingle('highlow')}${isNew ? " 🆕" : ""}`
+            : `Falsch! Zahl war ${nextNum}. ${t('gameOver')} ${t('score')}: ${hlScore} | ${formatHighscoreSingle('highlow')}${isNew ? " 🆕" : ""}`;
+        updateMenuHighscores();
+    }
+}
 
 // COOKIE CLICKER (UPGRADED)
 let clickerState = {
@@ -1046,6 +1354,22 @@ function wordPoolLength() { return pool.length; }
 function guessLetter(btn, l) { btn.disabled = true; guesses.push(l); if(!word.includes(l)) lives--; updateHangman(); }
 function updateHangman() { let str = word.split("").map(l => guesses.includes(l)?l:"_").join(" "); document.getElementById('hangman-word').innerText = str; document.getElementById('hangman-status').innerText = "Leben übrig: " + lives; if(!str.includes("_")) document.getElementById('hangman-status').innerText = "Gewonnen! 🏆"; if(lives <= 0) document.getElementById('hangman-status').innerText = "Verloren! Wort war: " + word; }
 
+function playRPS(p) {
+    let options = ['✊', '✋', '✌️'], c = options[Math.floor(Math.random()*3)], res = "";
+    if(p === c) res = language === 'en' ? "Draw!" : "Gleichstand!";
+    else if((p==='✊'&&c==='✌️') || (p==='✋'&&c==='✊') || (p==='✌️'&&c==='✋')) res = language === 'en' ? "Win! 🎉" : "Sieg! 🎉";
+    else res = language === 'en' ? "Loss! 🤖" : "Niederlage! 🤖";
+    document.getElementById('rps-status').innerText = `${language === 'en' ? 'Bot' : 'Bot'}: ${c} -> ${res}`;
+}
+
+function updateHangman() {
+    let str = word.split("").map(l => guesses.includes(l)?l:"_").join(" ");
+    document.getElementById('hangman-word').innerText = str;
+    document.getElementById('hangman-status').innerText = `${language === 'en' ? 'Lives left' : 'Leben übrig'}: ${lives}`;
+    if(!str.includes("_")) document.getElementById('hangman-status').innerText = language === 'en' ? "Won! 🏆" : "Gewonnen! 🏆";
+    if(lives <= 0) document.getElementById('hangman-status').innerText = language === 'en' ? `Lost! Word was: ${word}` : `Verloren! Wort war: ${word}`;
+}
+
 function getPieceColor(piece) {
     if(!piece) return null;
     return piece === piece.toUpperCase() ? 'w' : 'b';
@@ -1078,7 +1402,7 @@ function initChess() {
     ];
     chessTurn = 'w';
     chessSelected = null;
-    chessStatus = 'Weiß am Zug';
+    chessStatus = t('whiteTurn');
     renderChessBoard();
 }
 function resetChess() { initChess(); }
@@ -1086,29 +1410,29 @@ function updateChessStatus() {
     const whiteKing = chessBoard.some(row => row.includes('K'));
     const blackKing = chessBoard.some(row => row.includes('k'));
     if(!whiteKing) {
-        chessStatus = 'Game over: Schwarz gewinnt!';
+        chessStatus = t('gameOver') + ' ' + t('blackWins');
         return;
     }
     if(!blackKing) {
-        chessStatus = 'Glückwunsch! Weiß gewinnt!';
+        chessStatus = t('whiteCongrats');
         return;
     }
     const moves = chessTurn === 'w' ? getAllMoves('w', chessBoard) : getAllMoves('b', chessBoard);
     const inCheck = isInCheck(chessTurn, chessBoard);
     if(moves.length === 0) {
         if(inCheck) {
-            chessStatus = chessTurn === 'w' ? 'Schachmatt! Schwarz gewinnt!' : 'Schachmatt! Weiß gewinnt!';
+            chessStatus = chessTurn === 'w' ? t('checkmateBlack') : t('checkmateWhite');
         } else {
-            chessStatus = 'Patt! Unentschieden!';
+            chessStatus = t('stalemate');
         }
         return;
     }
     if(inCheck) {
-        chessStatus = chessTurn === 'w' ? 'Weiß ist im Schach' : (chessLevel === 'two' ? 'Schwarz ist im Schach' : 'Bot ist im Schach');
+        chessStatus = chessTurn === 'w' ? t('whiteCheck') : (chessLevel === 'two' ? t('blackCheck') : t('botCheck'));
     } else {
-        chessStatus = chessTurn === 'w' ? 'Weiß am Zug' : (chessLevel === 'two' ? 'Schwarz am Zug' : 'Bot zieht...');
+        chessStatus = chessTurn === 'w' ? t('whiteTurn') : (chessLevel === 'two' ? t('blackTurn') : t('botThinking'));
     }
-    chessStatus += ` | Modus: ${chessLevel === 'two' ? '2 Spieler' : (chessLevel.charAt(0).toUpperCase() + chessLevel.slice(1))}`;
+    chessStatus += ` | ${t('mode')}: ${chessLevel === 'two' ? t('twoPlayers') : (chessLevel.charAt(0).toUpperCase() + chessLevel.slice(1))}`;
 }
 function renderChessBoard() {
     const boardEl = document.getElementById('chess-board');
@@ -1187,13 +1511,13 @@ function aiMove() {
     }
     const moves = getAllMoves('b', chessBoard);
     if(moves.length === 0) {
-        chessStatus = 'Unentschieden!';
+        chessStatus = t('drawGame');
         renderChessBoard();
         chessLocked = false;
         if(chessAITimer) { clearTimeout(chessAITimer); chessAITimer = null; }
         return;
     }
-    chessStatus = 'Bot denkt...';
+    chessStatus = t('botThinks');
     renderChessBoard();
     chessAITimer = setTimeout(() => {
         let choice;
@@ -1677,7 +2001,23 @@ function updateMinesweeperStatus() {
     }
 }
 
+function updateMinesweeperStatus() {
+    const status = document.getElementById('minesweeper-status');
+    const revealed = minesweeperRevealed.flat().filter(x => x).length;
+    const nonMineCount = minesweeperSize * minesweeperSize - minesweeperMines;
+
+    if(minesweeperGameOver) {
+        status.innerText = '💣 ' + t('boom');
+    } else if(revealed === nonMineCount) {
+        minesweeperGameOver = true;
+        status.innerText = '🎉 ' + t('minesWon');
+    } else {
+        status.innerText = `${t('flags')}: ${minesweeperFlagged}/${minesweeperMines} | ${t('revealed')}: ${revealed}/${nonMineCount}`;
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+    updateUILanguage();
     updateMenuHighscores();
     // ensure highscores screen shows default selection
     const sel = document.getElementById('hs-game-select');
@@ -1685,4 +2025,3 @@ window.addEventListener('DOMContentLoaded', () => {
     const diff = selDiff ? selDiff.value : diffMode;
     if(sel) showHighscores(sel.value || 'snake', diff);
 });
-

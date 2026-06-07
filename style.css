@@ -147,6 +147,11 @@ h1 {
     border-color: var(--accent-color);
 }
 
+.language-select {
+    margin-bottom: 18px;
+    min-width: 140px;
+}
+
 /* Game Grid (Menü-Karten) */
 .game-grid { 
     display: grid; 
@@ -245,6 +250,67 @@ h1 {
     font-size: 1.05rem; 
     margin-top: 20px; 
     border-radius: 14px; 
+}
+
+/* SETTINGS */
+.settings-btn {
+    background: rgba(255, 250, 241, 0.72);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    z-index: 10;
+}
+
+.settings-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--accent-color);
+}
+
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 40px;
+}
+
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 12px;
+}
+
+.settings-group label {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+
+.lang-select {
+    background: #fffaf1;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: border-color 0.2s;
+}
+
+.lang-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
 }
 
 /* Spielfelder & Leinwände */
